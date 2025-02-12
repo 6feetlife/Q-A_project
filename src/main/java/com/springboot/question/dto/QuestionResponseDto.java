@@ -22,4 +22,6 @@ public class QuestionResponseDto {
     private String title;
 
     private String contents;
+
+    private int likeCount;
 }

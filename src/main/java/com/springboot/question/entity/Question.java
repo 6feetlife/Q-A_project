@@ -34,9 +34,6 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany
-    private List<Like> likes = new ArrayList<>();
-
     @Enumerated(value = EnumType.STRING)
     private QuestionStatus questionStatus = QuestionStatus.QUESTION_REGISTERED;
 
