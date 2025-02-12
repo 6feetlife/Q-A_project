@@ -13,7 +13,9 @@ public enum ExceptionCode {
     NICKNAME_ALREADY_USED(409, "This nickname already used"),
     ANSWER_NOT_FOUND(404, "Answer not found"),
     FORBIDDEN(403, "Access not allowed"),
-    QUESTION_NOT_FOUND(404, "Question not found");
+    QUESTION_NOT_FOUND(404, "Question not found"),
+    LIKE_NOT_FOUND(404, "Like not found"),
+    UNCHANGABLE_STATE(405, "Method not Allowed");
 
     @Getter
     private int status;

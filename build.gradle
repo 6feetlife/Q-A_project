@@ -30,6 +30,18 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation 'org.mapstruct:mapstruct:1.5.1.Final'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.1.Final'
+
+	implementation 'com.google.code.gson:gson'
+	// 스프링 시큐리티 사용
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT 를 생성, 서명, 검증하는 기능을 제공
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	// JJWT 의 구현체
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	// JSON 파싱 및 변환을 위한 라이브러리
+	// payload 데이터를 JSON 으로 변환할때 사용
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 }
 
 tasks.named('javadoc') {

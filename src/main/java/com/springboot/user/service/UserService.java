@@ -2,6 +2,7 @@ package com.springboot.user.service;
 
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
+import com.springboot.question.entity.Question;
 import com.springboot.user.entity.User;
 import com.springboot.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -76,7 +79,11 @@ public class UserService {
     @DeleteMapping
     public void deleteUser(int userId) {
         User user = validateExistingUser(userId);
-        userRepository.delete(user);
+        user.setUserStatus(User.UserStatus.DEACTIVATED_USER);
+        user.getQuestions().stream()
+                .forEach(question -> question.setQuestionStatus(Question.QuestionStatus.QUESTION_DELETED));
+
+        userRepository.save(user);
     }
 
     // 이미 가입된 회원인지 중복 가입 예외처리

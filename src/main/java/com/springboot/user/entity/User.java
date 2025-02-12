@@ -37,11 +37,15 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
+    @Column
+    private String roll = "USER";
+
     @OneToMany(mappedBy = "user")
     private List<Question> questions = new ArrayList<>();
 
     @Enumerated(value = EnumType.STRING)
     private UserStatus userStatus;
+
 
     public enum UserStatus {
         ACTIVE_USER("활성화 상태"),

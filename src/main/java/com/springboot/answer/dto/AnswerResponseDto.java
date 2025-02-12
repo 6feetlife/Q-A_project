@@ -17,5 +17,5 @@ public class AnswerResponseDto {
 
     private String content;
 
-    private Answer.AnserStatus anserStatus;
+    private Answer.AnswerStatus answerStatus;
 }

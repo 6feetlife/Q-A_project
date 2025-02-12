@@ -27,9 +27,9 @@ public class Answer extends BaseEntity {
     private String content;
 
     @Enumerated(value = EnumType.STRING)
-    private AnserStatus anserStatus = AnserStatus.DONE_ANSWER;
+    private AnswerStatus answerStatus = AnswerStatus.DONE_ANSWER;
 
-    public enum AnserStatus {
+    public enum AnswerStatus {
         NOT_ANSWER,
         DONE_ANSWER
     }
