@@ -1,5 +1,6 @@
 package com.springboot.like.entity;
 
+import com.springboot.audit.BaseEntity;
 import com.springboot.question.entity.Question;
 import com.springboot.user.entity.User;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import javax.persistence.*;
 @Setter
 @NoArgsConstructor
 @Entity
-public class Like {
+public class Like extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,5 +1,6 @@
 package com.springboot.question.entity;
 
+import com.springboot.audit.BaseEntity;
 import com.springboot.like.entity.Like;
 import com.springboot.user.entity.User;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @Entity
-public class Question {
+public class Question extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

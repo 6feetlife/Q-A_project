@@ -1,5 +1,6 @@
 package com.springboot.answer.entitiy;
 
+import com.springboot.audit.BaseEntity;
 import com.springboot.question.entity.Question;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import javax.validation.constraints.NotNull;
 @Setter
 @NoArgsConstructor
 @Entity
-public class Answer {
+public class Answer extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
