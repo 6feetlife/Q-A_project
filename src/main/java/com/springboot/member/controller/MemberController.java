@@ -30,7 +30,7 @@ public class MemberController {
     public ResponseEntity postMember(@Valid @RequestBody MemberPostDto requestBody) {
         Member member = memberMapper.memberPostDtoToMember(requestBody);
         memberService.createMember(member);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PatchMapping("/{memberId}")
@@ -39,6 +39,14 @@ public class MemberController {
                                       @RequestHeader("Authorization") String authorizationHeader) {
         Member member = memberMapper.memberPatchDtoToMember(requestBody);
         memberService.updateMember(member, memberId, authorizationHeader);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{memberId}")
+    public ResponseEntity deleteMember(@Valid @PathVariable("memberId") int memberId,
+                                       @RequestHeader("Authorization") String authorizationHeader) {
+        memberService.deleteMember(memberId, authorizationHeader);
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
