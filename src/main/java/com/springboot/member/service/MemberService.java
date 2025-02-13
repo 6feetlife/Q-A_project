@@ -7,6 +7,7 @@ import com.springboot.exception.ExceptionCode;
 import com.springboot.question.entity.Question;
 import com.springboot.member.entity.Member;
 import com.springboot.member.repository.MemberRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -26,6 +27,9 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final CustomAuthorityUtils authorityUtils;
     private final TokenService tokenService;
+
+    @Value("${mail.address.admin}")
+    private String adminEmail;
 
     public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
                          CustomAuthorityUtils authorityUtils, TokenService tokenService) {
@@ -65,7 +69,7 @@ public class MemberService {
         if(Objects.equals(currentUserEmail, isOwnerEmail)){
             findMember.setNickname(
                     Optional.ofNullable(member.getNickname())
-                            .orElse(findMember.getName()));
+                            .orElse(findMember.getNickname()));
             findMember.setName(
                     Optional.ofNullable(member.getName())
                             .orElse(findMember.getName()));
@@ -73,11 +77,14 @@ public class MemberService {
                     Optional.ofNullable(member.getMemberStatus())
                             .orElse(findMember.getMemberStatus()));
             findMember.setPassword(
-                    Optional.ofNullable(passwordEncoder.encode(member.getPassword()))
+                    Optional.ofNullable(member.getPassword())
+                            .map(password -> passwordEncoder.encode(password))
                             .orElse(findMember.getPassword()));
             findMember.setPhone(
                     Optional.ofNullable(member.getPhone())
                             .orElse(findMember.getPhone()));
+        } else {
+            throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
         }
         return memberRepository.save(findMember);
     }
@@ -97,8 +104,8 @@ public class MemberService {
         return members;
     }
 
-
-    public void deleteMember(int memberId) {
+    // 회원 삭제는 관리자와 유저 본인만 가능
+    public void deleteMember(int memberId, String authorization) {
         // 존재하는 회원인지 검증
         Member member = validateExistingMember(memberId);
 
@@ -108,9 +115,26 @@ public class MemberService {
             throw new BusinessLogicException(ExceptionCode.MEMBER_DEACTIVATED);
         }
 
-        member.setMemberStatus(Member.MemberStatus.DEACTIVATED_MEMBER);
-        member.getQuestions().stream()
-                .forEach(question -> question.setQuestionStatus(Question.QuestionStatus.QUESTION_DELETED));
+        // 현재 요청한 사용자의 토큰에서 email 추출
+        String currentUserEmail = tokenService.getUserIdFromToken(authorization);
+        // uri 에 있는 memberId 의 owner email 추출
+        String isOwnerEmail = member.getEmail();
+
+        List<String> authentication = List.of(isOwnerEmail, adminEmail);
+
+        // 만약 요청한 사용자의 이메일과 변경하고자하는 유저 정보의 owner 의 이메일이 동일하거나 admin 일 경우 변경 실행
+        boolean value = authentication.stream().anyMatch(email -> Objects.equals(currentUserEmail, email));
+
+        if(value){
+            // 회원 상태 변경
+            member.setMemberStatus(Member.MemberStatus.DEACTIVATED_MEMBER);
+            // 회원이 작성한 질문글 상태 변경
+            member.getQuestions().stream()
+                    .forEach(question -> question.setQuestionStatus(Question.QuestionStatus.QUESTION_DELETED));
+        } else {
+            throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
+        }
+
 
         memberRepository.save(member);
     }

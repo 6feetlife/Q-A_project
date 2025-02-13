@@ -33,12 +33,12 @@ public class MemberController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping("/{member-id}")
+    @PatchMapping("/{memberId}")
     public ResponseEntity patchMember(@Valid @RequestBody MemberPatchDto requestBody,
-                                      @PathVariable("member-id") int memberId,
+                                      @PathVariable("memberId") int memberId,
                                       @RequestHeader("Authorization") String authorizationHeader) {
         Member member = memberMapper.memberPatchDtoToMember(requestBody);
-        memberService.updateMember(member, memberId);
+        memberService.updateMember(member, memberId, authorizationHeader);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
