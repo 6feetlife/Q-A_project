@@ -5,6 +5,8 @@ import com.springboot.member.dto.MemberPostDto;
 import com.springboot.member.entity.Member;
 import com.springboot.member.mapper.MemberMapper;
 import com.springboot.member.service.MemberService;
+import com.springboot.response.MultiResponseDto;
+import com.springboot.response.SingleResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +43,17 @@ public class MemberController {
         memberService.updateMember(member, memberId, authorizationHeader);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @GetMapping("/{memberId}")
+    public ResponseEntity patchMember(@Valid @PathVariable("memberId") int memberId,
+                                      @RequestHeader("Authorization") String authorizationHeader) {
+        Member member = memberService.findMember(memberId, authorizationHeader);
+        return new ResponseEntity<>(
+                new SingleResponseDto<>(memberMapper.memberToMemberResponseDto(member)), HttpStatus.OK
+        );
+    }
+
+
 
     @DeleteMapping("/{memberId}")
     public ResponseEntity deleteMember(@Valid @PathVariable("memberId") int memberId,

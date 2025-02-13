@@ -61,12 +61,12 @@ public class MemberService {
         validateMemberStatus(findMember);
 
         // 현재 요청한 사용자의 토큰에서 email 추출
-        String currentUserEmail = tokenService.getUserIdFromToken(authorization);
+        String currentMemberEmail = tokenService.getUserIdFromToken(authorization);
         // uri 에 있는 memberId 의 owner email 추출
         String isOwnerEmail = findMember.getEmail();
 
         // 만약 요청한 사용자의 이메일과 변경하고자하는 유저정보의 owner 의 이메일이 같다면 변경 실행
-        if(Objects.equals(currentUserEmail, isOwnerEmail)){
+        if(Objects.equals(currentMemberEmail, isOwnerEmail)){
             findMember.setNickname(
                     Optional.ofNullable(member.getNickname())
                             .orElse(findMember.getNickname()));
@@ -89,15 +89,30 @@ public class MemberService {
         return memberRepository.save(findMember);
     }
 
-
-    public Member findMember(int memberId) {
+    // 유저 단일 조회는 유저 본인과 관리자만 허용
+    public Member findMember(int memberId, String authorization) {
         // 유저 존재 확인
         Member findMember = validateExistingMember(memberId);
 
-        return findMember;
+        // 요청한 유저의 email 확인
+        String currentMemberEmail = tokenService.getUserIdFromToken(authorization);
+
+        // 유저 정보 owner 의 email 과 관리자 email 을 담은 리스트
+        List<String> authentication = List.of(findMember.getEmail(), adminEmail);
+
+        // 요청한 유저의 이메일과 비교하여 리스트에 동일한 이메일이 있는지 true / false
+        boolean valuer = authentication.stream()
+                .anyMatch(email -> Objects.equals(email, currentMemberEmail));
+
+        // 요청한 유저가 조회하고자 하는 유저 정보의 owner 와 동일 인물인지 또는 관리자인지 권한에 따른 접근 제한
+        if(!valuer) {
+            throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
+        } else {
+            return findMember;
+        }
     }
 
-
+    // 전체 조회는 관리자만 가능하다.
     public Page<Member> findMembers(int page, int size) {
         Page<Member> members = memberRepository.findAll(PageRequest.of(page, size, Sort.by("MemberId").ascending()));
 
@@ -134,7 +149,6 @@ public class MemberService {
         } else {
             throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
         }
-
 
         memberRepository.save(member);
     }
