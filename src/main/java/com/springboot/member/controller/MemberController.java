@@ -1,11 +1,10 @@
 package com.springboot.member.controller;
 
+import com.springboot.member.dto.MemberPatchDto;
 import com.springboot.member.dto.MemberPostDto;
 import com.springboot.member.entity.Member;
 import com.springboot.member.mapper.MemberMapper;
-import com.springboot.member.repository.MemberRepository;
 import com.springboot.member.service.MemberService;
-import com.springboot.response.SingleResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +30,15 @@ public class MemberController {
     public ResponseEntity postMember(@Valid @RequestBody MemberPostDto requestBody) {
         Member member = memberMapper.memberPostDtoToMember(requestBody);
         memberService.createMember(member);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
-        return new ResponseEntity<>(
-                new SingleResponseDto<>(memberService.createMember(member)), HttpStatus.OK
-        );
+    @PatchMapping("/{member-id}")
+    public ResponseEntity patchMember(@Valid @RequestBody MemberPatchDto requestBody,
+                                      @PathVariable("member-id") int memberId,
+                                      @RequestHeader("Authorization") String authorizationHeader) {
+        Member member = memberMapper.memberPatchDtoToMember(requestBody);
+        memberService.updateMember(member, memberId);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

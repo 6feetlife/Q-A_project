@@ -42,7 +42,7 @@ public class Member extends BaseEntity {
     private List<Question> questions = new ArrayList<>();
 
     @Enumerated(value = EnumType.STRING)
-    private MemberStatus memberStatus;
+    private MemberStatus memberStatus = MemberStatus.ACTIVE_MEMBER;
 
 
     public enum MemberStatus {
