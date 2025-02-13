@@ -5,9 +5,8 @@ import com.springboot.exception.ExceptionCode;
 import com.springboot.like.repository.LikeRepository;
 import com.springboot.question.entity.Question;
 import com.springboot.question.questionRepository.QuestionRepository;
-import com.springboot.response.PageInfo;
-import com.springboot.user.entity.User;
-import com.springboot.user.service.UserService;
+import com.springboot.member.entity.Member;
+import com.springboot.member.service.MemberService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,35 +16,34 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class QuestionService {
     private final QuestionRepository questionRepository;
-    private final UserService userService;
+    private final MemberService memberService;
     private final LikeRepository likeRepository;
 
 
-    public QuestionService(QuestionRepository questionRepository, UserService userService,
+    public QuestionService(QuestionRepository questionRepository, MemberService memberService,
                            LikeRepository likeRepository) {
         this.questionRepository = questionRepository;
-        this.userService = userService;
+        this.memberService = memberService;
         this.likeRepository = likeRepository;
 
     }
 
     @PostMapping
     public Question createQuestion (Question question) {
-        userService.validateExistingUser(question.getUser().getUserId().intValue());
-        userService.validateUserStatus(question.getUser());
+        memberService.validateExistingMember(question.getMember().getMemberId().intValue());
+        memberService.validateMemberStatus(question.getMember());
 
         return questionRepository.save(question);
     }
 
     @PatchMapping
-    public void updateQuestion (Question question, User user) {
+    public void updateQuestion (Question question, Member user) {
         // 존재하는 질문인지 검증
         Question findQuestion = validateQuestionExistence(question.getQuestionId().intValue());
 
@@ -75,7 +73,7 @@ public class QuestionService {
     }
 
     @GetMapping
-    public Question findQuestion(int questionId, User user) {
+    public Question findQuestion(int questionId, Member user) {
         // question 검증
         Question findQuestion = validateQuestionExistence(questionId);
         // 삭제 상태라면 예외 처리
@@ -114,7 +112,7 @@ public class QuestionService {
     }
 
     // 권한에 따른 질문 조회 제한
-    public Question questionsByPermission(Question findQuestion, User user) {
+    public Question questionsByPermission(Question findQuestion, Member user) {
         // user 가 가지고있는 question 리스트에 해당 questionId 가 포함되어있는지 true or false
         boolean value = user.getQuestions().stream()
                 .anyMatch(question -> Objects

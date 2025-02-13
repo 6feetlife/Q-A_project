@@ -13,7 +13,7 @@ import javax.validation.constraints.Size;
 public class QuestionPostDto {
 
     @Positive
-    private int userId;
+    private int memberId;
 
     @NotBlank
     @Size(max = 500, message = "내용은 500자 이하로 입력해야 합니다.")

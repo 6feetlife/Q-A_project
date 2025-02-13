@@ -1,4 +1,4 @@
-package com.springboot.user.dto;
+package com.springboot.member.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,15 +8,15 @@ import javax.validation.constraints.Pattern;
 
 @Getter
 @NoArgsConstructor
-public class UserPatchDto {
+public class MemberPatchDto {
 
     @NotBlank
     @Pattern(regexp = "^[가-힣]{2,16}$", message = "주민등록상 이름을 입력하여주세요")
-    private String userName;
+    private String name;
 
     @NotBlank
     @Pattern(regexp = "^[가-힣a-z]{2,8}$", message = "한글과 영어 소문자만 사용 가능합니다.")
-    private String userNickname;
+    private String nickname;
 
     @NotBlank
     @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "010-XXXX-XXXX 형식이어야 합니다.")

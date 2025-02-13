@@ -13,7 +13,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 public class QuestionResponseDto {
 
-    private Long userId;
+    private Long memberId;
 
     private String userNickname;
 

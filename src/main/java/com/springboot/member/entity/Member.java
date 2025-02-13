@@ -1,14 +1,12 @@
-package com.springboot.user.entity;
+package com.springboot.member.entity;
 
 import com.springboot.audit.BaseEntity;
-import com.springboot.like.entity.Like;
 import com.springboot.question.entity.Question;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,20 +14,20 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @Entity
-public class User extends BaseEntity {
+public class Member extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private Long memberId;
 
     @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
-    private String userName;
+    private String name;
 
     @Column(nullable = false)
-    private String userNickname;
+    private String nickname;
 
     @Column(nullable = false)
     private String phone;
@@ -37,24 +35,24 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column
-    private String roll = "USER";
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> roles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "MEMBER")
     private List<Question> questions = new ArrayList<>();
 
     @Enumerated(value = EnumType.STRING)
-    private UserStatus userStatus;
+    private MemberStatus memberStatus;
 
 
-    public enum UserStatus {
-        ACTIVE_USER("활성화 상태"),
-        DEACTIVATED_USER("탈퇴 상태"),
-        DORMANT_USER("휴면 상태");
+    public enum MemberStatus {
+        ACTIVE_MEMBER("활성화 상태"),
+        DEACTIVATED_MEMBER("탈퇴 상태"),
+        DORMANT_MEMBER("휴면 상태");
 
         private String message;
 
-        UserStatus(String message) {
+        MemberStatus(String message) {
             this.message = message;
         }
 

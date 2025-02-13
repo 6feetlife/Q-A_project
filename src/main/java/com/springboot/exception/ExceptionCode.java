@@ -6,10 +6,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ExceptionCode {
 
-    USER_NOT_FOUND(404, "User not found"),
-    EXISTING_USER(409, "This user already exists"),
-    USER_DORMANT(403, "This account dormant"),
-    USER_DEACTIVATED(403,"This account deactivated"),
+    MEMBER_NOT_FOUND(404, "MEMBER not found"),
+    EXISTING_MEMBER(409, "This MEMBER already exists"),
+    MEMBER_DORMANT(403, "This account dormant"),
+    MEMBER_DEACTIVATED(403,"This account deactivated"),
     NICKNAME_ALREADY_USED(409, "This nickname already used"),
     ANSWER_NOT_FOUND(404, "Answer not found"),
     FORBIDDEN(403, "Access not allowed"),

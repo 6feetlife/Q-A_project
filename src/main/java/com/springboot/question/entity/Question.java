@@ -1,16 +1,12 @@
 package com.springboot.question.entity;
 
 import com.springboot.audit.BaseEntity;
-import com.springboot.like.entity.Like;
-import com.springboot.user.entity.User;
+import com.springboot.member.entity.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -31,8 +27,8 @@ public class Question extends BaseEntity {
     private String content;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @Column
     private int likeCount;

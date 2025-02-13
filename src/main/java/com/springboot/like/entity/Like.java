@@ -2,7 +2,7 @@ package com.springboot.like.entity;
 
 import com.springboot.audit.BaseEntity;
 import com.springboot.question.entity.Question;
-import com.springboot.user.entity.User;
+import com.springboot.member.entity.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +21,7 @@ public class Like extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private Member user;
 
     @ManyToOne
     @JoinColumn(name = "question_id")

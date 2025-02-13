@@ -4,10 +4,9 @@ import com.springboot.answer.entitiy.Answer;
 import com.springboot.answer.repository.AnswerRepository;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
-import com.springboot.like.entity.Like;
 import com.springboot.question.entity.Question;
 import com.springboot.question.service.QuestionService;
-import com.springboot.user.entity.User;
+import com.springboot.member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -58,7 +56,7 @@ public class AnswerService {
     }
 
     @GetMapping
-    public Answer findAnswer(int answerId, User user) {
+    public Answer findAnswer(int answerId, Member user) {
         Answer findAnswer = verifiedAnswer(answerId);
         int questionId = findAnswer.getQuestion().getQuestionId().intValue();
 
