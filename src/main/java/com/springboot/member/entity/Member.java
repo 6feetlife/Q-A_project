@@ -38,7 +38,7 @@ public class Member extends BaseEntity {
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> roles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "MEMBER")
+    @OneToMany(mappedBy = "member")
     private List<Question> questions = new ArrayList<>();
 
     @Enumerated(value = EnumType.STRING)

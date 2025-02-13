@@ -19,5 +19,5 @@ public class AnswerPostDto {
     @Pattern(regexp = "^[a-zA-Z가-힣!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~ ]{1,800}$")
     private String content;
 
-    private Answer.AnserStatus anserStatus = Answer.AnserStatus.DONE_ANSWER;
+    private Answer.AnswerStatus answerStatus = Answer.AnswerStatus.DONE_ANSWER;
 }

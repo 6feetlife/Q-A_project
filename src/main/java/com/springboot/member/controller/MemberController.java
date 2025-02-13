@@ -1,9 +1,13 @@
 package com.springboot.member.controller;
 
 import com.springboot.member.dto.MemberPostDto;
+import com.springboot.member.entity.Member;
+import com.springboot.member.mapper.MemberMapper;
 import com.springboot.member.repository.MemberRepository;
 import com.springboot.member.service.MemberService;
+import com.springboot.response.SingleResponseDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -15,17 +19,21 @@ import javax.validation.Valid;
 @Slf4j
 @Validated
 public class MemberController {
-    private final MemberRepository memberRepository;
+    private final MemberMapper memberMapper;
     private final MemberService memberService;
 
-    public MemberController(MemberService memberService, MemberRepository memberRepository) {
+    public MemberController(MemberService memberService, MemberMapper memberMapper) {
         this.memberService = memberService;
-        this.memberRepository = memberRepository;
+        this.memberMapper = memberMapper;
     }
 
     @PostMapping
     public ResponseEntity postMember(@Valid @RequestBody MemberPostDto requestBody) {
+        Member member = memberMapper.memberPostDtoToMember(requestBody);
+        memberService.createMember(member);
 
-
+        return new ResponseEntity<>(
+                new SingleResponseDto<>(memberService.createMember(member)), HttpStatus.OK
+        );
     }
 }

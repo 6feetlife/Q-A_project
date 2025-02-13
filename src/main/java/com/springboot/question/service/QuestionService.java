@@ -2,7 +2,7 @@ package com.springboot.question.service;
 
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
-import com.springboot.like.repository.LikeRepository;
+import com.springboot.likes.repository.LikesRepository;
 import com.springboot.question.entity.Question;
 import com.springboot.question.questionRepository.QuestionRepository;
 import com.springboot.member.entity.Member;
@@ -23,18 +23,18 @@ import java.util.Optional;
 public class QuestionService {
     private final QuestionRepository questionRepository;
     private final MemberService memberService;
-    private final LikeRepository likeRepository;
+    private final LikesRepository likesRepository;
 
 
     public QuestionService(QuestionRepository questionRepository, MemberService memberService,
-                           LikeRepository likeRepository) {
+                           LikesRepository likesRepository) {
         this.questionRepository = questionRepository;
         this.memberService = memberService;
-        this.likeRepository = likeRepository;
+        this.likesRepository = likesRepository;
 
     }
 
-    @PostMapping
+
     public Question createQuestion (Question question) {
         memberService.validateExistingMember(question.getMember().getMemberId().intValue());
         memberService.validateMemberStatus(question.getMember());
@@ -42,7 +42,7 @@ public class QuestionService {
         return questionRepository.save(question);
     }
 
-    @PatchMapping
+
     public void updateQuestion (Question question, Member user) {
         // 존재하는 질문인지 검증
         Question findQuestion = validateQuestionExistence(question.getQuestionId().intValue());
@@ -72,7 +72,7 @@ public class QuestionService {
         questionRepository.save(findQuestion);
     }
 
-    @GetMapping
+
     public Question findQuestion(int questionId, Member user) {
         // question 검증
         Question findQuestion = validateQuestionExistence(questionId);
@@ -80,14 +80,14 @@ public class QuestionService {
         isVisible(findQuestion);
 
         // like 갯수 셋팅
-        int likeCount = likeRepository.findByLikeId((long)questionId).size();
+        int likeCount = likesRepository.findByLikesId((long)questionId).size();
         findQuestion.setLikeCount(likeCount);
 
         // 권한에 따른 질문 조회 제한
         return questionsByPermission(findQuestion, user);
     }
 
-    @GetMapping
+
     public Page<Question> questions(int page, int size) {
         Page<Question> questions = questionRepository.findAll(PageRequest.of(page, size, Sort.by("likeCount").descending()));
         return questions;

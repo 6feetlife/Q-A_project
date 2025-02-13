@@ -8,6 +8,7 @@ import com.springboot.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,22 +20,27 @@ import java.util.Optional;
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @PostMapping
+
     public Member createMember(Member member) {
         // 중복된 회원인지 이메일로 검증
         isMemberAlreadyRegistered(member);
         // 중복된 닉네임인지 검증
         isNicknameAlreadyUsed(member);
 
+        String encodedPassword = passwordEncoder.encode(member.getPassword());
+        member.setPassword(encodedPassword);
+
         return memberRepository.save(member);
     }
 
-    @PatchMapping
+
     public Member updateMember(Member member) {
         // MemberId 로 존재하는 회원인지 검증
         Member findMember = validateExistingMember(member.getMemberId().intValue());
@@ -59,7 +65,7 @@ public class MemberService {
         return memberRepository.save(findMember);
     }
 
-    @GetMapping
+
     public Member findMember(int memberId) {
         // 유저 존재 확인
         Member findMember = validateExistingMember(memberId);
@@ -67,14 +73,14 @@ public class MemberService {
         return findMember;
     }
 
-    @GetMapping
+
     public Page<Member> findMembers(int page, int size) {
         Page<Member> members = memberRepository.findAll(PageRequest.of(page, size, Sort.by("MemberId").ascending()));
 
         return members;
     }
 
-    @DeleteMapping
+
     public void deleteMember(int memberId) {
         Member member = validateExistingMember(memberId);
         member.setMemberStatus(Member.MemberStatus.DEACTIVATED_MEMBER);

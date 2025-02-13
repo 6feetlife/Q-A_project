@@ -1,4 +1,4 @@
-package com.springboot.like.entity;
+package com.springboot.likes.entity;
 
 import com.springboot.audit.BaseEntity;
 import com.springboot.question.entity.Question;
@@ -13,15 +13,15 @@ import javax.persistence.*;
 @Setter
 @NoArgsConstructor
 @Entity
-public class Like extends BaseEntity {
+public class Likes extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long likeId;
+    private Long likesId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private Member user;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @ManyToOne
     @JoinColumn(name = "question_id")
