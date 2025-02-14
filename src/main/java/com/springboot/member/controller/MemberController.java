@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
@@ -56,6 +57,7 @@ public class MemberController {
     @GetMapping("/{memberId}")
     public ResponseEntity getMember(@Valid @PathVariable("memberId") int memberId,
                                     @AuthenticationPrincipal MemberDetails memberDetails) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Member member = memberService.findMember(memberId, memberDetails);
         return new ResponseEntity<>(
                 new SingleResponseDto<>(memberMapper.memberToMemberResponseDto(member)), HttpStatus.OK

@@ -160,9 +160,10 @@ public class MemberService {
     }
 
     // 가입된 회원인지 검증
-    public Member validateExistingMember(int memberId) {
+    public Member validateExistingMember(long memberId) {
         Optional<Member> findMember = memberRepository.findByMemberId(memberId);
-        return findMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        Member member = findMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        return member;
     }
 
     // 회원 상태 검증
