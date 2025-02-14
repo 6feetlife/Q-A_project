@@ -1,5 +1,6 @@
 package com.springboot.question.entity;
 
+import com.springboot.answer.entitiy.Answer;
 import com.springboot.audit.BaseEntity;
 import com.springboot.member.entity.Member;
 import lombok.Getter;
@@ -18,10 +19,8 @@ public class Question extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long questionId;
 
-
     @Column(nullable = false, length = 100)
     private String title;
-
 
     @Column(nullable = false, length = 500)
     private String content;
@@ -29,6 +28,9 @@ public class Question extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @OneToOne(mappedBy = "question")
+    private Answer answer;
 
     @Column
     private int viewCount = 0;
