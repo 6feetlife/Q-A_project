@@ -2,6 +2,8 @@ package com.springboot.auth.filter;
 
 import com.springboot.auth.jwt.JwtTokenizer;
 import com.springboot.auth.utils.CustomAuthorityUtils;
+import com.springboot.auth.utils.MemberDetailService;
+import com.springboot.auth.utils.MemberDetails;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,11 +23,13 @@ import java.util.Map;
 public class JwtVerificationFilter extends OncePerRequestFilter {
     private final JwtTokenizer jwtTokenizer;
     private final CustomAuthorityUtils authorityUtils;
-
+    private final MemberDetailService memberDetailService;
     public JwtVerificationFilter(JwtTokenizer jwtTokenizer,
-                                 CustomAuthorityUtils authorityUtils) {
+                                 CustomAuthorityUtils authorityUtils,
+                                 MemberDetailService memberDetailService) {
         this.jwtTokenizer = jwtTokenizer;
         this.authorityUtils = authorityUtils;
+        this.memberDetailService = memberDetailService;
     }
 
     @Override
@@ -82,10 +86,13 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
     private void setAuthenticationToContext(Map<String, Object> claims) {
         // payload 에서 username 가져오는데 String 으로 형변환 해줘야함
         String username = (String)claims.get("username");
+
+        // 2. MemberDetailsService를 통해 MemberDetails 객체 가져오기
+        MemberDetails memberDetails = (MemberDetails) memberDetailService.loadUserByUsername(username);
         // payload 에서 권한 목록 가져와서 권한 생성후 리스트화
         List<GrantedAuthority> authorities = authorityUtils.createAuthorities((List)claims.get("roles"));
         // username 과 password 가 들어간 토큰 생성
-        Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(memberDetails, null, authorities);
         // 시큐리티 context 에 있는 인증 정보를 현재 생성한 인증 정보로 교체
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
