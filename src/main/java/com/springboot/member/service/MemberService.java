@@ -1,7 +1,8 @@
 package com.springboot.member.service;
 
-import com.springboot.auth.service.TokenService;
+
 import com.springboot.auth.utils.CustomAuthorityUtils;
+import com.springboot.auth.utils.MemberDetails;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
 import com.springboot.question.entity.Question;
@@ -13,8 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,17 +25,15 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final CustomAuthorityUtils authorityUtils;
-    private final TokenService tokenService;
 
     @Value("${mail.address.admin}")
     private String adminEmail;
 
     public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-                         CustomAuthorityUtils authorityUtils, TokenService tokenService) {
+                         CustomAuthorityUtils authorityUtils) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityUtils = authorityUtils;
-        this.tokenService = tokenService;
     }
 
 
@@ -55,18 +52,16 @@ public class MemberService {
     }
 
 
-    public Member updateMember(Member member, int memberId, String authorization) {
+    public Member updateMember(Member member, int memberId, MemberDetails memberDetails) {
         // MemberId 로 존재하는 회원인지 검증
         Member findMember = validateExistingMember(memberId);
         validateMemberStatus(findMember);
 
-        // 현재 요청한 사용자의 토큰에서 email 추출
-        String currentMemberEmail = tokenService.getUserIdFromToken(authorization);
         // uri 에 있는 memberId 의 owner email 추출
         String isOwnerEmail = findMember.getEmail();
 
         // 만약 요청한 사용자의 이메일과 변경하고자하는 유저정보의 owner 의 이메일이 같다면 변경 실행
-        if(Objects.equals(currentMemberEmail, isOwnerEmail)){
+        if(Objects.equals(memberDetails.getEmail(), isOwnerEmail)){
             findMember.setNickname(
                     Optional.ofNullable(member.getNickname())
                             .orElse(findMember.getNickname()));
@@ -90,19 +85,16 @@ public class MemberService {
     }
 
     // 유저 단일 조회는 유저 본인과 관리자만 허용
-    public Member findMember(int memberId, String authorization) {
+    public Member findMember(int memberId, MemberDetails memberDetails) {
         // 유저 존재 확인
         Member findMember = validateExistingMember(memberId);
-
-        // 요청한 유저의 email 확인
-        String currentMemberEmail = tokenService.getUserIdFromToken(authorization);
 
         // 유저 정보 owner 의 email 과 관리자 email 을 담은 리스트
         List<String> authentication = List.of(findMember.getEmail(), adminEmail);
 
         // 요청한 유저의 이메일과 비교하여 리스트에 동일한 이메일이 있는지 true / false
         boolean valuer = authentication.stream()
-                .anyMatch(email -> Objects.equals(email, currentMemberEmail));
+                .anyMatch(email -> Objects.equals(email, memberDetails.getEmail()));
 
         // 요청한 유저가 조회하고자 하는 유저 정보의 owner 와 동일 인물인지 또는 관리자인지 권한에 따른 접근 제한
         if(!valuer) {
@@ -120,7 +112,7 @@ public class MemberService {
     }
 
     // 회원 삭제는 관리자와 유저 본인만 가능
-    public void deleteMember(int memberId, String authorization) {
+    public void deleteMember(int memberId, MemberDetails memberDetails) {
         // 존재하는 회원인지 검증
         Member member = validateExistingMember(memberId);
 
@@ -130,15 +122,13 @@ public class MemberService {
             throw new BusinessLogicException(ExceptionCode.MEMBER_DEACTIVATED);
         }
 
-        // 현재 요청한 사용자의 토큰에서 email 추출
-        String currentUserEmail = tokenService.getUserIdFromToken(authorization);
         // uri 에 있는 memberId 의 owner email 추출
         String isOwnerEmail = member.getEmail();
 
         List<String> authentication = List.of(isOwnerEmail, adminEmail);
 
         // 만약 요청한 사용자의 이메일과 변경하고자하는 유저 정보의 owner 의 이메일이 동일하거나 admin 일 경우 변경 실행
-        boolean value = authentication.stream().anyMatch(email -> Objects.equals(currentUserEmail, email));
+        boolean value = authentication.stream().anyMatch(email -> Objects.equals(memberDetails.getEmail(), email));
 
         if(value){
             // 회원 상태 변경

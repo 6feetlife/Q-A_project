@@ -1,27 +1,24 @@
 package com.springboot.member.controller;
 
-import com.springboot.auth.utils.MemberDetailService;
+import com.springboot.auth.utils.MemberDetails;
 import com.springboot.member.dto.MemberPatchDto;
 import com.springboot.member.dto.MemberPostDto;
-import com.springboot.member.dto.MemberResponseDto;
 import com.springboot.member.entity.Member;
 import com.springboot.member.mapper.MemberMapper;
 import com.springboot.member.service.MemberService;
 import com.springboot.response.MultiResponseDto;
-import com.springboot.response.PageInfo;
 import com.springboot.response.SingleResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -49,16 +46,17 @@ public class MemberController {
     @PatchMapping("/{memberId}")
     public ResponseEntity patchMember(@Valid @RequestBody MemberPatchDto requestBody,
                                       @PathVariable("memberId") int memberId,
-                                      @RequestHeader("Authorization") String authorizationHeader) {
+                                      @AuthenticationPrincipal MemberDetails memberDetails) {
         Member member = memberMapper.memberPatchDtoToMember(requestBody);
-        memberService.updateMember(member, memberId, authorizationHeader);
+
+        memberService.updateMember(member, memberId, memberDetails);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/{memberId}")
     public ResponseEntity getMember(@Valid @PathVariable("memberId") int memberId,
-                                      @RequestHeader("Authorization") String authorizationHeader) {
-        Member member = memberService.findMember(memberId, authorizationHeader);
+                                    @AuthenticationPrincipal MemberDetails memberDetails) {
+        Member member = memberService.findMember(memberId, memberDetails);
         return new ResponseEntity<>(
                 new SingleResponseDto<>(memberMapper.memberToMemberResponseDto(member)), HttpStatus.OK
         );
@@ -79,8 +77,8 @@ public class MemberController {
 
     @DeleteMapping("/{memberId}")
     public ResponseEntity deleteMember(@Valid @PathVariable("memberId") int memberId,
-                                       @RequestHeader("Authorization") String authorizationHeader) {
-        memberService.deleteMember(memberId, authorizationHeader);
+                                       @AuthenticationPrincipal MemberDetails memberDetails) {
+        memberService.deleteMember(memberId, memberDetails);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
