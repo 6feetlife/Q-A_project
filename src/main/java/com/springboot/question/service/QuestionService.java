@@ -12,9 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -82,6 +79,9 @@ public class QuestionService {
         // like 갯수 셋팅
         int likeCount = likesRepository.findByLikesId((long)questionId).size();
         findQuestion.setLikeCount(likeCount);
+
+        // viewCount 증가
+        findQuestion.setViewCount(findQuestion.getViewCount() + 1);
 
         // 권한에 따른 질문 조회 제한
         return questionsByPermission(findQuestion, user);

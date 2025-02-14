@@ -31,7 +31,10 @@ public class Question extends BaseEntity {
     private Member member;
 
     @Column
-    private int likeCount;
+    private int viewCount = 0;
+
+    @Column
+    private int likeCount = 0;
 
     @Enumerated(value = EnumType.STRING)
     private QuestionStatus questionStatus = QuestionStatus.QUESTION_REGISTERED;

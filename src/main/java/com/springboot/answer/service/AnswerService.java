@@ -78,11 +78,15 @@ public class AnswerService {
         answerRepository.delete(findAnswer);
     }
 
-
-
     // answer 존재하는지 검증 메서드
     public Answer verifiedAnswer(long answerId) {
         Optional<Answer> findAnswer = answerRepository.findByAnswerId(answerId);
+        return findAnswer.orElseThrow(() -> new BusinessLogicException(ExceptionCode.ANSWER_NOT_FOUND));
+    }
+
+    // questionId 로 Answer 찾기
+    public Answer verifiedAnswerUseQuestionId(long questionId) {
+        Optional<Answer> findAnswer = answerRepository.findByQuestion_QuestionId(questionId);
         return findAnswer.orElseThrow(() -> new BusinessLogicException(ExceptionCode.ANSWER_NOT_FOUND));
     }
 

@@ -22,5 +22,4 @@ public class MemberResponseDto {
 
     private List<QuestionResponseDto> questionResponseDtos;
 
-
 }
