@@ -72,24 +72,22 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         // 접근 권한과 상관없이 post 요청이라면 허용한다
                         .antMatchers(HttpMethod.POST, "/*/members").permitAll()
-                        .antMatchers(HttpMethod.POST, "/*/coffees").hasRole("ADMIN")
-                        .antMatchers(HttpMethod.POST, "/*/orders").hasRole("USER")
+                        .antMatchers(HttpMethod.POST, "/*/questions").hasRole("USER")
+                        .antMatchers(HttpMethod.POST, "/*/answers").hasRole("ADMIN")
                         // 정보 수정 요청은 USER 권한만 가능하다
                         .antMatchers(HttpMethod.PATCH,"/*/members/**").hasRole("USER")
-                        .antMatchers(HttpMethod.PATCH, "/*/coffees/**").hasRole("ADMIN")
-                        .antMatchers(HttpMethod.PATCH, "/*/orders/**").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.PATCH, "/*/questions/**").hasRole("USER")
+                        .antMatchers(HttpMethod.PATCH, "/*/answers/**").hasRole("ADMIN")
                         // 회원 전체 조회 요청은 ADMIN 만 가능하다
                         .antMatchers(HttpMethod.GET, "/*/members").hasRole("ADMIN")
-                        .antMatchers(HttpMethod.GET, "/*/coffees").permitAll()
-                        .antMatchers(HttpMethod.GET, "/*/orders").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.GET, "/*/questions").hasAnyRole("USER", "ADMIN")
                         // 회원 단일 조회 요청은 USER ADMIN 만 가능
                         .antMatchers(HttpMethod.GET,"/*/members/**").hasAnyRole("USER", "ADMIN")
-                        .antMatchers(HttpMethod.GET, "/*/coffees/**").permitAll()
-                        .antMatchers(HttpMethod.GET, "/*/orders/**").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.GET, "/*/questions/**").permitAll()
                         // 회원 삭제 요청은 USER 만 가능
-                        .antMatchers(HttpMethod.DELETE, "/*/members/**").hasRole("ADMIN")
-                        .antMatchers(HttpMethod.DELETE, "/*/coffees/**").hasRole("ADMIN")
-                        .antMatchers(HttpMethod.DELETE, "/*/orders/**").hasAnyRole("USER", "ADMIN")
+                        .antMatchers(HttpMethod.DELETE, "/*/members/**").hasRole("USER")
+                        .antMatchers(HttpMethod.DELETE, "/*/questions/**").hasRole("USER")
+                        .antMatchers(HttpMethod.DELETE, "/*/answers/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 );
         // http 객체를 SecurityFilterChain 으로 변환하여 반환
