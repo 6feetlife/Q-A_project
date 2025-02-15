@@ -84,7 +84,6 @@ public class MemberMapper {
     // questionId 로 AnswerResponseDto 만들기
     public AnswerResponseDto findAnswerResponseDto(long questionId) {
         Answer answer = answerService.verifiedAnswerUseQuestionId(questionId);
-        return answerMapper.AnswerToAnswerResponseDto(answer);
+        return answerMapper.answerToAnswerResponseDto(answer);
     }
-
 }

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -48,43 +49,24 @@ public class AnswerService {
     }
 
 
-    public void updateAnswer(Answer answer) {
+    public void updateAnswer(Answer answer, long answerId) {
 
         // 존재하는 답변인지 검증
-        Answer findAnswer = verifiedAnswer(answer.getAnswerId());
-
-        if(answer.getQuestion().getQuestionStatus() != Question.QuestionStatus.QUESTION_ANSWERED) {
-            throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
-        } else {
-            findAnswer.setContent(
-                    Optional.ofNullable(answer.getContent())
-                            .orElse(findAnswer.getContent())
-            );
-        }
-
-    }
-
-
-    public Answer findAnswer(int answerId, MemberDetails memberDetails) {
         Answer findAnswer = verifiedAnswer(answerId);
-        int questionId = findAnswer.getQuestion().getQuestionId().intValue();
 
+        findAnswer.setContent(
+                Optional.ofNullable(answer.getContent())
+                        .orElse(findAnswer.getContent())
+        );
 
-        findAnswer.setQuestion(questionService.findQuestion(questionId, memberDetails));
-
-        return findAnswer;
+        answerRepository.save(findAnswer);
     }
 
-
-    public Page<Answer> findAnswers(int page, int size) {
-        Page<Answer> answers = answerRepository.findAll(PageRequest.of(page, size, Sort.by("answersId").descending()));
-        return answers;
-    }
-
-
+    @Transactional
     public void deleteAnswer(long answerId) {
         Answer findAnswer = verifiedAnswer(answerId);
         answerRepository.delete(findAnswer);
+        findAnswer.getQuestion().setQuestionStatus(Question.QuestionStatus.QUESTION_REGISTERED);
     }
 
     // answer 존재하는지 검증 메서드

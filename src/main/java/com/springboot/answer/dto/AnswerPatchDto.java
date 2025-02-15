@@ -13,7 +13,5 @@ public class AnswerPatchDto {
 
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z가-힣!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~ ]{1,800}$")
-    private String contents;
-
-    private Answer.AnswerStatus answerStatus;
+    private String content;
 }

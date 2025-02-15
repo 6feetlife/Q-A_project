@@ -1,5 +1,6 @@
 package com.springboot.answer.mapper;
 
+import com.springboot.answer.dto.AnswerPatchDto;
 import com.springboot.answer.dto.AnswerPostDto;
 import com.springboot.answer.dto.AnswerResponseDto;
 import com.springboot.answer.entitiy.Answer;
@@ -10,10 +11,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface AnswerMapper {
 
-    AnswerResponseDto AnswerToAnswerResponseDto(Answer answer);
+    AnswerResponseDto answerToAnswerResponseDto(Answer answer);
 
 
-    default Answer AnswerToAnswerPostDto(AnswerPostDto answerPostDto) {
+    default Answer answerPostDtoToAnswer(AnswerPostDto answerPostDto) {
         Question question = new Question();
         question.setQuestionId(answerPostDto.getQuestionId());
         Answer answer = new Answer();
@@ -22,4 +23,8 @@ public interface AnswerMapper {
 
         return answer;
     }
+
+    Answer answerPatchDtoToAnswer(AnswerPatchDto answerPatchDto);
+
+
 }
