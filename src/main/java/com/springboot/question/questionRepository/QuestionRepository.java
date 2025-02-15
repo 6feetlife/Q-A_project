@@ -1,5 +1,6 @@
 package com.springboot.question.questionRepository;
 
+import com.springboot.answer.entitiy.Answer;
 import com.springboot.question.entity.Question;
 import org.springframework.data.jpa.repository.JpaRepository;
 

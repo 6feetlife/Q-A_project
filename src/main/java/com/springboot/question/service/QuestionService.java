@@ -97,7 +97,7 @@ public class QuestionService {
         isVisible(findQuestion);
 
         // like 갯수 셋팅
-        int likeCount = likesRepository.findByLikesId((long)questionId).size();
+        int likeCount = likesRepository.findByQuestion_QuestionId((long)questionId).size();
         findQuestion.setLikeCount(likeCount);
 
         // viewCount 증가

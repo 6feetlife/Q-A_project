@@ -1,16 +1,8 @@
 package com.springboot.question.dto;
 
 import com.springboot.answer.dto.AnswerResponseDto;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class QuestionResponseDto {
+public class NoAnswerResponseDto {
 
     private Long questionId;
 
@@ -18,7 +10,7 @@ public class QuestionResponseDto {
 
     private String nickname;
 
-    private AnswerResponseDto answerResponseDto;
+    private String answerInfo;
 
     private String title;
 

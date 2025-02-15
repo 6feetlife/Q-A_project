@@ -2,6 +2,7 @@ package com.springboot.answer.service;
 
 import com.springboot.answer.entitiy.Answer;
 import com.springboot.answer.repository.AnswerRepository;
+import com.springboot.auth.utils.MemberDetails;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
 import com.springboot.question.entity.Question;
@@ -28,7 +29,7 @@ public class AnswerService {
         this.questionService = questionService;
     }
 
-    @PostMapping
+
     public void createAnswer(Answer answer) {
         // answer 가 등록될 question 이 존재하는지 확인
         Question findQuestion = questionService.validateQuestionExistence(answer.getQuestion().getQuestionId().intValue());
@@ -38,7 +39,7 @@ public class AnswerService {
         answerRepository.save(answer);
     }
 
-    @PatchMapping
+
     public void updateAnswer(Answer answer) {
 
         // 존재하는 답변인지 검증
@@ -55,24 +56,24 @@ public class AnswerService {
 
     }
 
-    @GetMapping
-    public Answer findAnswer(int answerId, Member user) {
+
+    public Answer findAnswer(int answerId, MemberDetails memberDetails) {
         Answer findAnswer = verifiedAnswer(answerId);
         int questionId = findAnswer.getQuestion().getQuestionId().intValue();
 
 
-        findAnswer.setQuestion(questionService.findQuestion(questionId, user));
+        findAnswer.setQuestion(questionService.findQuestion(questionId, memberDetails));
 
         return findAnswer;
     }
 
-    @GetMapping
+
     public Page<Answer> findAnswers(int page, int size) {
         Page<Answer> answers = answerRepository.findAll(PageRequest.of(page, size, Sort.by("answersId").descending()));
         return answers;
     }
 
-    @DeleteMapping
+
     public void deleteAnswer(long answerId) {
         Answer findAnswer = verifiedAnswer(answerId);
         answerRepository.delete(findAnswer);
