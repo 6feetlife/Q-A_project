@@ -65,7 +65,7 @@ public class QuestionController {
     }
 
     @GetMapping
-    public ResponseEntity getQuestion(@Positive @RequestParam("page") int page,
+    public ResponseEntity getQuestions(@Positive @RequestParam("page") int page,
                                      @Positive @RequestParam("size") int size) {
 
         Page<Question> pageQuestion = questionService.findQuestions(page - 1, size);
@@ -83,6 +83,6 @@ public class QuestionController {
                                        @AuthenticationPrincipal MemberDetails memberDetails) {
         questionService.deleteQuestion(questionId, memberDetails);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

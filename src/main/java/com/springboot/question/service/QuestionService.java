@@ -5,8 +5,6 @@ import com.springboot.auth.utils.MemberDetails;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
 import com.springboot.likes.repository.LikesRepository;
-import com.springboot.question.dto.QuestionResponseDto;
-import com.springboot.question.dto.QuestionsResponseDto;
 import com.springboot.question.entity.Question;
 import com.springboot.question.questionRepository.QuestionRepository;
 import com.springboot.member.entity.Member;
@@ -16,9 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -128,6 +124,12 @@ public class QuestionService {
 
     }
 
+    public Page<Question> findQuestions(int page, int size) {
+        Page<Question> questions = questionRepository.findAll(PageRequest.of(page, size, Sort.by("likeCount").descending()));
+        return questions;
+
+    }
+
     public void deleteQuestion(int questionId, MemberDetails memberDetails) {
         // question 존재하는지 검증
         Question findQuestion = validateQuestionExistence(questionId);
@@ -137,12 +139,8 @@ public class QuestionService {
         // 질문글에 등록된 member email 추출
         String ownerEmail = findQuestion.getMember().getEmail();
 
-        // 유저 정보 owner 의 email 과 관리자 email 을 담은 리스트
-        List<String> authentication = List.of(ownerEmail, adminEmail);
-
         // 요청한 유저의 이메일과 비교하여 리스트에 동일한 이메일이 있는지 true / false
-        boolean valuer = authentication.stream()
-                .anyMatch(email -> Objects.equals(email, memberDetails.getEmail()));
+        boolean valuer = Objects.equals(ownerEmail,memberDetails.getEmail());
 
         // 요청한 유저가 조회하고자 하는 유저 정보의 owner 와 동일 인물인지 또는 관리자인지 권한에 따른 접근 제한
         if(!valuer) {
@@ -155,11 +153,7 @@ public class QuestionService {
 
 
 
-    public Page<Question> findQuestions(int page, int size) {
-        Page<Question> questions = questionRepository.findAll(PageRequest.of(page, size, Sort.by("likeCount").descending()));
-        return questions;
 
-    }
 
     // question 존재 확인
     public Question validateQuestionExistence(int questionId) {
