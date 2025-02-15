@@ -15,7 +15,8 @@ public enum ExceptionCode {
     FORBIDDEN(403, "Access not allowed"),
     QUESTION_NOT_FOUND(404, "Question not found"),
     LIKE_NOT_FOUND(404, "Like not found"),
-    UNCHANGABLE_STATE(405, "Method not Allowed");
+    UNCHANGABLE_STATE(405, "Method not Allowed"),
+    ALREADY_ANSWER(409, "Already answer");
 
     @Getter
     private int status;

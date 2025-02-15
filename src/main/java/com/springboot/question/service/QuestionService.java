@@ -153,8 +153,6 @@ public class QuestionService {
 
 
 
-
-
     // question 존재 확인
     public Question validateQuestionExistence(int questionId) {
         Optional<Question> findQuestion = questionRepository.findByQuestionId(questionId);

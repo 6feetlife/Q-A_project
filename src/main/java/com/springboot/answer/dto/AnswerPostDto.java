@@ -13,7 +13,7 @@ import javax.validation.constraints.Positive;
 public class AnswerPostDto {
 
     @Positive
-    private Long answerId;
+    private long questionId;
 
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z가-힣!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?`~ ]{1,800}$")

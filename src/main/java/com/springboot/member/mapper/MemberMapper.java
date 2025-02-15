@@ -9,6 +9,7 @@ import com.springboot.member.dto.MemberPostDto;
 import com.springboot.member.dto.MemberResponseDto;
 import com.springboot.member.entity.Member;
 import com.springboot.question.dto.QuestionResponseDto;
+import com.springboot.question.mapper.QuestionMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -20,10 +21,12 @@ import java.util.stream.Collectors;
 public class MemberMapper {
     private final AnswerService answerService;
     private final AnswerMapper answerMapper;
+    private final QuestionMapper questionMapper;
 
-    public MemberMapper(AnswerService answerService, AnswerMapper answerMapper) {
+    public MemberMapper(AnswerService answerService, AnswerMapper answerMapper, QuestionMapper questionMapper) {
         this.answerService = answerService;
         this.answerMapper = answerMapper;
+        this.questionMapper = questionMapper;
     }
 
     public Member memberPostDtoToMember(MemberPostDto memberPostDto){
@@ -55,20 +58,9 @@ public class MemberMapper {
         memberResponseDto.setNickname(member.getNickname());
         memberResponseDto.setEmail(member.getEmail());
 
-        List<QuestionResponseDto> questionResponseDtos = new ArrayList<>();
-        member.getQuestions().stream()
-                .map(question ->
-                        new QuestionResponseDto(
-                                question.getQuestionId(),
-                                member.getMemberId(),
-                                member.getNickname(),
-                                findAnswerResponseDto(question.getQuestionId()),
-                                question.getTitle(),
-                                question.getContent(),
-                                question.getLikeCount(),
-                                question.getViewCount()
-                        ))
-                        .collect(Collectors.toList());
+        List<QuestionResponseDto> questionResponseDtos = member.getQuestions().stream()
+                            .map(question -> questionMapper.questionToQuestionResponseDto(question))
+                            .collect(Collectors.toList());
 
         memberResponseDto.setQuestionResponseDtos(questionResponseDtos);
 

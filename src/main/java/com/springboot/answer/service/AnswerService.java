@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -34,9 +35,16 @@ public class AnswerService {
         // answer 가 등록될 question 이 존재하는지 확인
         Question findQuestion = questionService.validateQuestionExistence(answer.getQuestion().getQuestionId().intValue());
 
+        // question 상태가 QUESTION_REGISTERED 상태일때만 답변 등록 가능
+        boolean value = Objects.equals(findQuestion.getQuestionStatus().name(), "QUESTION_REGISTERED");
+
         // answer 가 등록되면 question "답변 완료" 상태로 변경
-        findQuestion.setQuestionStatus(Question.QuestionStatus.QUESTION_ANSWERED);
-        answerRepository.save(answer);
+        if(!value){
+            throw new BusinessLogicException(ExceptionCode.ALREADY_ANSWER);
+        } else {
+            findQuestion.setQuestionStatus(Question.QuestionStatus.QUESTION_ANSWERED);
+            answerRepository.save(answer);
+        }
     }
 
 
