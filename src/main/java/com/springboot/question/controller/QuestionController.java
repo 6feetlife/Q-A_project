@@ -107,6 +107,7 @@ public class QuestionController {
         Page<Question> pageQuestion = questionService.findQuestions(page - 1, size);
 
         List<Question> questions = pageQuestion.getContent();
+        questionService.isNewPostList(questions);
 
         return new ResponseEntity<>(
                 new MultiResponseDto<>(

@@ -250,4 +250,8 @@ public class QuestionService {
             question.setTitle("*NEW* " + question.getTitle());
         }
     }
+
+    public void isNewPostList(List<Question> questions) {
+        questions.stream().forEach(question -> isNewPost(question));
+    }
 }
