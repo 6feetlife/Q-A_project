@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -134,7 +136,6 @@ public class QuestionService {
         } else {
             throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
         }
-
         questionRepository.save(findQuestion);
     }
 
@@ -154,9 +155,6 @@ public class QuestionService {
         // 질문글에 등록된 member email 추출
         String ownerEmail = findQuestion.getMember().getEmail();
 
-        // 변경된 viewCount 적용을 위해 db 에 저장
-        questionRepository.save(findQuestion);
-
         // 비밀글인경우
         if(findQuestion.getQuestionVisibilityScope() == Question.QuestionVisibilityScope.PRIVATE_QUESTION){
             // 유저 정보 owner 의 email 과 관리자 email 을 담은 리스트
@@ -170,13 +168,15 @@ public class QuestionService {
             if(!valuer) {
                 throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
             } else {
-
+                // 변경된 viewCount 적용을 위해 db 에 저장
+                questionRepository.save(findQuestion);
                 return findQuestion;
             }
         } else {
+            // 변경된 viewCount 적용을 위해 db 에 저장
+            questionRepository.save(findQuestion);
             return findQuestion;
         }
-
     }
 
     public Page<Question> findQuestions(int page, int size) {
@@ -235,6 +235,19 @@ public class QuestionService {
             return findQuestion;
         } else {
             throw new BusinessLogicException(ExceptionCode.FORBIDDEN);
+        }
+    }
+
+    // 최신글 NEW 추가 (최신글의 기준은 작성일 기준 2일)
+    public void isNewPost(Question question) {
+        // 현재 시간과 질문 작성날짜 차이
+        long days = ChronoUnit.DAYS.between(question.getCreatedAt(), LocalDateTime.now());
+
+        boolean timeValue = question.getCreatedAt().getHour() <= LocalDateTime.now().getHour() &&
+                question.getCreatedAt().getMinute() <= LocalDateTime.now().getMinute();
+
+        if(days <= 2L && timeValue){
+            question.setTitle("*NEW* " + question.getTitle());
         }
     }
 }

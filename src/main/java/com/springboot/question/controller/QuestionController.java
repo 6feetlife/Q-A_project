@@ -92,6 +92,8 @@ public class QuestionController {
                                       @AuthenticationPrincipal MemberDetails memberDetails) {
 
         Question question = questionService.findQuestion(questionId, memberDetails);
+        // 최신글은 title 앞에 *NEW* 붙여서 출력 (최신글 기준 = 2일)
+        questionService.isNewPost(question);
         QuestionResponseDto response = questionMapper.questionToQuestionResponseDto(question);
         return new ResponseEntity<>(
                 new SingleResponseDto<>(response), HttpStatus.OK
