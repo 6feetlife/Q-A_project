@@ -11,6 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
+// JSON 직렬화시 null 값을 가진 필드를 포함하지 않도록 설정
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AnswerResponseDto {
 

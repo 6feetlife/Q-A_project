@@ -82,6 +82,12 @@ public class QuestionController {
         // QuestionPatchDto 에 설정해둔 유효성 검사 설정을 가져와서 실행
         Set<ConstraintViolation<QuestionPatchDto>> violations = validator.validate(requestBody);
 
+        // 만약 검증에서 걸려서 통과되지 못한다면 에러코드 반환
+        if(!violations.isEmpty()) {
+            return new ResponseEntity(
+                    new SingleResponseDto<>(violations), HttpStatus.BAD_REQUEST
+            );
+        }
         Question question = questionMapper.questionPatchDtoToQuestion(requestBody);
         questionService.updateQuestion(question, memberDetails, image, questionId);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -102,9 +108,11 @@ public class QuestionController {
 
     @GetMapping
     public ResponseEntity getQuestions(@Positive @RequestParam("page") int page,
-                                     @Positive @RequestParam("size") int size) {
+                                       @Positive @RequestParam("size") int size,
+                                       @RequestParam("sortBy") String sortBy,
+                                       @RequestParam("order") String order) {
 
-        Page<Question> pageQuestion = questionService.findQuestions(page - 1, size);
+        Page<Question> pageQuestion = questionService.findQuestions(page - 1, size, sortBy, order);
 
         List<Question> questions = pageQuestion.getContent();
         questionService.isNewPostList(questions);

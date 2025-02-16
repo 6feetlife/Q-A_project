@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class QuestionResponseDto {
 
     private Long questionId;
@@ -30,4 +31,5 @@ public class QuestionResponseDto {
     private int likeCount;
 
     private int viewCount;
+
 }

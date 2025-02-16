@@ -35,9 +35,23 @@ public interface QuestionMapper {
     }
 
     default List<QuestionResponseDto> questionsToQuestionResponseDto(List<Question> questions) {
+
         List<QuestionResponseDto> questionResponseDtos = questions.stream()
-                .map(question -> questionToQuestionResponseDto(question))
-                .collect(Collectors.toList());
+                        .map(question ->
+                                question.getQuestionVisibilityScope() == Question.QuestionVisibilityScope.PRIVATE_QUESTION ?
+                                questionToQuestionResponseDto(question) :
+                                        new QuestionResponseDto(
+                                                question.getQuestionId(),
+                                                null,
+                                                null,
+                                                "해당 질문글은 비밀글입니다",
+                                                null,
+                                                null,
+                                                null,
+                                                question.getLikeCount(),
+                                                question.getViewCount()))
+                        .collect(Collectors.toList());
+
         return questionResponseDtos;
     }
 

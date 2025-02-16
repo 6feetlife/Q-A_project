@@ -4,8 +4,8 @@ package com.springboot.question.service;
 import com.springboot.auth.utils.MemberDetails;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
-import com.springboot.likes.entity.Likes;
 import com.springboot.likes.repository.LikesRepository;
+import com.springboot.question.dto.QuestionResponseDto;
 import com.springboot.question.entity.Question;
 import com.springboot.question.questionRepository.QuestionRepository;
 import com.springboot.member.entity.Member;
@@ -179,8 +179,11 @@ public class QuestionService {
         }
     }
 
-    public Page<Question> findQuestions(int page, int size) {
-        Page<Question> questions = questionRepository.findAll(PageRequest.of(page, size, Sort.by("likeCount").descending()));
+    public Page<Question> findQuestions(int page, int size, String sortBy, String order) {
+        // equalsIgnoreCase = 대소문자 무시하고 비교
+        Sort.Direction direction = order.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        Page<Question> questions = questionRepository.findAll(PageRequest.of(page, size, Sort.by(direction, sortBy)));
         return questions;
 
     }
@@ -254,4 +257,7 @@ public class QuestionService {
     public void isNewPostList(List<Question> questions) {
         questions.stream().forEach(question -> isNewPost(question));
     }
+
+
+
 }
