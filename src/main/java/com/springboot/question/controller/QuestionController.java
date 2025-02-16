@@ -20,10 +20,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
+import javax.validation.*;
 import javax.validation.constraints.Positive;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/v11/questions")
@@ -46,13 +47,28 @@ public class QuestionController {
         ObjectMapper objectMapper = new ObjectMapper();
         // JSON 문자열(data)을 QuestionPostDto 객체로 변환
         QuestionPostDto requestBody = objectMapper.readValue(data, QuestionPostDto.class);
+
+        // Spring Validator 를 사용하여 유효성 검사 실행
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+        // QuestionPostDto 에 설정해둔 유효성 검사 설정을 가져와서 실행
+        Set<ConstraintViolation<QuestionPostDto>> violations = validator.validate(requestBody);
+
+        // 만약 검증에서 걸려서 통과되지 못한다면 에러코드 반환
+        if(!violations.isEmpty()) {
+            return new ResponseEntity(
+                    new SingleResponseDto<>(violations), HttpStatus.BAD_REQUEST
+            );
+        }
+
+
         // 현재 인증된 사용자의 memberId를 DTO 객체에 설정
         requestBody.setMemberId(memberDetails.getMemberId());
         questionService.createQuestion(questionMapper.questionPostDtoToQuestion(requestBody),memberDetails, image);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PatchMapping("/{questionId}")
+    @PatchMapping(value = "/{questionId}", consumes = "multipart/form-data")
     public ResponseEntity patchQuestion(@Valid @RequestBody QuestionPatchDto requestBody,
                                       @PathVariable("questionId") long questionId,
                                         @AuthenticationPrincipal MemberDetails memberDetails) {
