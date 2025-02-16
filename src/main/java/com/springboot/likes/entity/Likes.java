@@ -6,6 +6,8 @@ import com.springboot.member.entity.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 
 import javax.persistence.*;
 
@@ -26,5 +28,6 @@ public class Likes extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "question_id")
     private Question question;
+
 
 }

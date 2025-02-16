@@ -23,6 +23,13 @@ public class Answer extends BaseEntity {
     @JoinColumn(name = "question_id")
     private Question question;
 
+    public void setQuestion(Question question) {
+        this.question = question;
+        if(question.getAnswer() != this) {
+            question.setAnswer(this);
+        }
+    }
+
     @Column(nullable = false, length = 800)
     private String content;
 

@@ -2,10 +2,12 @@ package com.springboot.question.entity;
 
 import com.springboot.answer.entitiy.Answer;
 import com.springboot.audit.BaseEntity;
+import com.springboot.likes.entity.Likes;
 import com.springboot.member.entity.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 
@@ -29,8 +31,22 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    public void setMember(Member member) {
+        this.member = member;
+        if(!member.getQuestions().contains(this)) {
+            member.getQuestions().add(this);
+        }
+    }
+
     @OneToOne(mappedBy = "question")
     private Answer answer;
+
+    public void setAnswer(Answer answer) {
+        this.answer = answer;
+        if(answer.getQuestion() != this) {
+            answer.setQuestion(this);
+        }
+    }
 
     @Column
     private int viewCount = 0;
@@ -40,6 +56,7 @@ public class Question extends BaseEntity {
 
     @Enumerated(value = EnumType.STRING)
     private QuestionStatus questionStatus = QuestionStatus.QUESTION_REGISTERED;
+
 
     @Enumerated(value = EnumType.STRING)
     private QuestionVisibilityScope questionVisibilityScope = QuestionVisibilityScope.PUBLIC_QUESTION;

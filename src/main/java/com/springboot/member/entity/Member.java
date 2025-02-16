@@ -41,6 +41,13 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member")
     private List<Question> questions = new ArrayList<>();
 
+    public void setQuestions(Question question) {
+       this.questions.add(question);
+       if(question.getMember() != this) {
+           question.setMember(this);
+       }
+    }
+
     @Enumerated(value = EnumType.STRING)
     private MemberStatus memberStatus = MemberStatus.ACTIVE_MEMBER;
 

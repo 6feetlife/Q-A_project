@@ -26,5 +26,5 @@ public class QuestionPostDto {
     private String title;
 
 
-    private Question.QuestionVisibilityScope questionVisibilityScope;
+    private Question.QuestionVisibilityScope questionVisibilityScope = Question.QuestionVisibilityScope.PUBLIC_QUESTION;
 }

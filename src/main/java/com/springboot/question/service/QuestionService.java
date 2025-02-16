@@ -4,6 +4,7 @@ package com.springboot.question.service;
 import com.springboot.auth.utils.MemberDetails;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
+import com.springboot.likes.entity.Likes;
 import com.springboot.likes.repository.LikesRepository;
 import com.springboot.question.entity.Question;
 import com.springboot.question.questionRepository.QuestionRepository;
@@ -49,7 +50,15 @@ public class QuestionService {
             memberService.validateMemberStatus(question.getMember());
         }
 
-        return questionRepository.save(question);
+        question.setMember(findMember);
+        Question savedQuestion = questionRepository.save(question);
+
+        Likes likes = new Likes();
+        likes.setMember(findMember);
+        likes.setQuestion(question);
+        likesRepository.save(likes);
+
+        return savedQuestion;
     }
 
 
