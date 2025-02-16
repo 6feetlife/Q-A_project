@@ -2,6 +2,7 @@ package com.springboot.likes.controller;
 
 import com.springboot.auth.utils.MemberDetails;
 import com.springboot.likes.service.LikesService;
+import com.springboot.response.SingleResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,11 @@ public class LikesController {
     public ResponseEntity likesPost(@AuthenticationPrincipal MemberDetails memberDetails,
                                     @PathVariable("questionId") long questionId) {
 
-        likesService.createLikes(questionId, memberDetails);
 
-        return new ResponseEntity(HttpStatus.CREATED);
+
+        return new ResponseEntity(
+                new SingleResponseDto<>(likesService.createLikes(questionId, memberDetails)), HttpStatus.OK
+        );
     }
+
 }
