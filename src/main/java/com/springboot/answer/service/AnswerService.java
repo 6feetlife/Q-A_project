@@ -34,7 +34,7 @@ public class AnswerService {
 
     public void createAnswer(Answer answer) {
         // answer 가 등록될 question 이 존재하는지 확인
-        Question findQuestion = questionService.validateQuestionExistence(answer.getQuestion().getQuestionId().intValue());
+        Question findQuestion = questionService.validateQuestionExistence(answer.getQuestion().getQuestionId());
 
         // question 상태가 QUESTION_REGISTERED 상태일때만 답변 등록 가능
         boolean value = Objects.equals(findQuestion.getQuestionStatus().name(), "QUESTION_REGISTERED");

@@ -53,11 +53,6 @@ public class QuestionService {
         question.setMember(findMember);
         Question savedQuestion = questionRepository.save(question);
 
-        Likes likes = new Likes();
-        likes.setMember(findMember);
-        likes.setQuestion(question);
-        likesRepository.save(likes);
-
         return savedQuestion;
     }
 
@@ -163,7 +158,7 @@ public class QuestionService {
 
 
     // question 존재 확인
-    public Question validateQuestionExistence(int questionId) {
+    public Question validateQuestionExistence(long questionId) {
         Optional<Question> findQuestion = questionRepository.findByQuestionId(questionId);
 
         return findQuestion.orElseThrow(() -> new BusinessLogicException(ExceptionCode.QUESTION_NOT_FOUND));

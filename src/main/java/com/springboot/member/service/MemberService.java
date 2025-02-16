@@ -39,7 +39,7 @@ public class MemberService {
 
     public Member createMember(Member member) {
         // 중복된 회원인지 이메일로 검증
-        isMemberAlreadyRegistered(member);
+        isMemberAlreadyRegistered(member.getEmail());
         // 중복된 닉네임인지 검증
         isNicknameAlreadyUsed(member);
 
@@ -144,8 +144,8 @@ public class MemberService {
     }
 
     // 이미 가입된 회원인지 중복 가입 예외처리
-    public void isMemberAlreadyRegistered(Member member) {
-        Optional<Member> findMember = memberRepository.findByEmail(member.getEmail());
+    public void isMemberAlreadyRegistered(String email) {
+        Optional<Member> findMember = memberRepository.findByEmail(email);
         if(findMember.isPresent()) {
             throw new BusinessLogicException(ExceptionCode.EXISTING_MEMBER);
         }
@@ -159,9 +159,16 @@ public class MemberService {
         }
     }
 
-    // 가입된 회원인지 검증
+    // 가입된 회원인지 검증(id)
     public Member validateExistingMember(long memberId) {
         Optional<Member> findMember = memberRepository.findByMemberId(memberId);
+        Member member = findMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        return member;
+    }
+
+    // 가입된 회원인지 검증(email)
+    public Member validateExistingMemberUsedEmail(String email) {
+        Optional<Member> findMember = memberRepository.findByEmail(email);
         Member member = findMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
         return member;
     }
