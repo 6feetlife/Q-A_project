@@ -154,6 +154,9 @@ public class QuestionService {
         // 질문글에 등록된 member email 추출
         String ownerEmail = findQuestion.getMember().getEmail();
 
+        // 변경된 viewCount 적용을 위해 db 에 저장
+        questionRepository.save(findQuestion);
+
         // 비밀글인경우
         if(findQuestion.getQuestionVisibilityScope() == Question.QuestionVisibilityScope.PRIVATE_QUESTION){
             // 유저 정보 owner 의 email 과 관리자 email 을 담은 리스트
