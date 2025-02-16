@@ -61,6 +61,9 @@ public class Question extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private QuestionVisibilityScope questionVisibilityScope = QuestionVisibilityScope.PUBLIC_QUESTION;
 
+    @Column
+    private String imageUrl;
+
     public enum QuestionVisibilityScope {
         PRIVATE_QUESTION("비공개 게시물"),
         PUBLIC_QUESTION("공개 게시물");

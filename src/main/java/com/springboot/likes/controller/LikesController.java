@@ -24,8 +24,6 @@ public class LikesController {
     public ResponseEntity likesPost(@AuthenticationPrincipal MemberDetails memberDetails,
                                     @PathVariable("questionId") long questionId) {
 
-
-
         return new ResponseEntity(
                 new SingleResponseDto<>(likesService.createLikes(questionId, memberDetails)), HttpStatus.OK
         );

@@ -1,5 +1,6 @@
 package com.springboot.question.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springboot.auth.utils.MemberDetails;
 import com.springboot.question.dto.QuestionPatchDto;
 import com.springboot.question.dto.QuestionPostDto;
@@ -17,9 +18,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -35,11 +38,17 @@ public class QuestionController {
         this.questionService = questionService;
     }
 
-    @PostMapping
-    public ResponseEntity postQuestion(@Valid @RequestBody QuestionPostDto requestBody,
-                                       @AuthenticationPrincipal MemberDetails memberDetails) {
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity postQuestion(@RequestPart("data") String data,
+                                       @RequestPart(value = "image", required = false) MultipartFile image,
+                                       @AuthenticationPrincipal MemberDetails memberDetails) throws IOException {
+        // objectMapper 객체 생성 (JSON 문자열을 DTO 객체로 변환하는데 사용)
+        ObjectMapper objectMapper = new ObjectMapper();
+        // JSON 문자열(data)을 QuestionPostDto 객체로 변환
+        QuestionPostDto requestBody = objectMapper.readValue(data, QuestionPostDto.class);
+        // 현재 인증된 사용자의 memberId를 DTO 객체에 설정
         requestBody.setMemberId(memberDetails.getMemberId());
-        questionService.createQuestion(questionMapper.questionPostDtoToQuestion(requestBody), memberDetails);
+        questionService.createQuestion(questionMapper.questionPostDtoToQuestion(requestBody),memberDetails, image);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

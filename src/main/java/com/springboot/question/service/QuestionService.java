@@ -15,7 +15,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +42,7 @@ public class QuestionService {
         this.likesRepository = likesRepository;
     }
 
-    public Question createQuestion (Question question, MemberDetails memberDetails) {
+    public Question createQuestion (Question question, MemberDetails memberDetails, MultipartFile image) throws IOException {
 
         // question 에 담겨온 memberId 로 member 존재하는지 확인
         Member findMember = memberService.validateExistingMember(question.getMember().getMemberId().intValue());
@@ -45,14 +50,36 @@ public class QuestionService {
         // uri 에 있는 memberId 의 owner email 추출
         String isOwnerEmail = findMember.getEmail();
 
-        if(Objects.equals(memberDetails.getEmail(), isOwnerEmail)) {
-            // 질문등록이 가능한 상태인지 검증
-            memberService.validateMemberStatus(question.getMember());
+        // 이미지 저장 로직
+        if(image != null && !image.isEmpty()) {
+            try{
+                // 저장할 디렉토리 경로 설정
+                String uploadDir = "uploads/";
+                Path upladPath = Paths.get(uploadDir);
+                // 디렉토리가 존재하지 않으면 생성
+                if (!Files.exists(upladPath)) {
+                    Files.createDirectories(upladPath);
+                }
+                // 파일명 생성 (현재 시간 + 원본 파일명)
+                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                // 파일 저장 경로 설정
+                Path filePath = upladPath.resolve(fileName);
+                // 파일을 지정된 경로로 복사 (파일 업로드)
+                Files.copy(image.getInputStream(), filePath);
+
+                // 저장된 이미지 경로를 question 객체에 설정
+                question.setImageUrl("/" + uploadDir + fileName);
+            } catch (IOException e) {
+                // 파일 저장 중 오류가 발생하면 예외 발생
+                throw new BusinessLogicException(ExceptionCode.FILE_UPLOAD_FAILED);
+            }
+            if(Objects.equals(memberDetails.getEmail(), isOwnerEmail)) {
+                // 질문등록이 가능한 상태인지 검증
+                memberService.validateMemberStatus(question.getMember());
+            }
+            question.setMember(findMember);
         }
-
-        question.setMember(findMember);
         Question savedQuestion = questionRepository.save(question);
-
         return savedQuestion;
     }
 
