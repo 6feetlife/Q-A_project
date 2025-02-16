@@ -26,6 +26,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
+
 @EnableMethodSecurity
 @Configuration
 public class SecurityConfiguration {
@@ -109,7 +111,10 @@ public class SecurityConfiguration {
         // 스크립트 기반의 HTTP 통신 = 클라이언트측 언어가 브라우저에서 실행되면서 발생하는 HTTP 요청을 의미
         // ex) AJAX 요청, Fetch API 등
         // 모든 출처(Origin)에 대해 스크립트 기반의 HTTP 통신을 허용하도록 설정
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+//        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         // 파라미터로 지정한 HTTP Method 에 대한 HTTP 통신을 허용
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE"));
         // CORS 정책을 URL 패턴별로 설정하는 클래스, 특정 URL(endPoint) 에 대해 CORS 정책을 다르게 적용할때 사용
