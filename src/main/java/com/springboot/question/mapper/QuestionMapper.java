@@ -24,6 +24,7 @@ public interface QuestionMapper {
         questionResponseDto.setNickname(question.getMember().getNickname());
         questionResponseDto.setLikeCount(question.getLikeCount());
         questionResponseDto.setViewCount(question.getViewCount());
+        questionResponseDto.setImageUrl(question.getImageUrl());
         questionResponseDto.setAnswerResponseDto(
                 (question.getAnswer() != null) ?
                         new AnswerResponseDto(question.getAnswer().getAnswerId()

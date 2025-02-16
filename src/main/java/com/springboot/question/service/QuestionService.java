@@ -44,11 +44,8 @@ public class QuestionService {
 
     public Question createQuestion (Question question, MemberDetails memberDetails, MultipartFile image) throws IOException {
 
-        // question 에 담겨온 memberId 로 member 존재하는지 확인
-        Member findMember = memberService.validateExistingMember(question.getMember().getMemberId().intValue());
-
-        // uri 에 있는 memberId 의 owner email 추출
-        String isOwnerEmail = findMember.getEmail();
+        // 존재하는 회원인지 검증
+        Member findMember = memberService.validateExistingMemberUsedEmail(memberDetails.getEmail());
 
         // 이미지 저장 로직
         if(image != null && !image.isEmpty()) {
@@ -73,20 +70,20 @@ public class QuestionService {
                 // 파일 저장 중 오류가 발생하면 예외 발생
                 throw new BusinessLogicException(ExceptionCode.FILE_UPLOAD_FAILED);
             }
-            if(Objects.equals(memberDetails.getEmail(), isOwnerEmail)) {
-                // 질문등록이 가능한 상태인지 검증
-                memberService.validateMemberStatus(question.getMember());
-            }
-            question.setMember(findMember);
+        } else {
+            question.setImageUrl("업로드된 이미지 파일이 없습니다.");
         }
+        // 질문등록이 가능한 상태인지 검증
+        memberService.validateMemberStatus(question.getMember());
+        question.setMember(findMember);
+
         Question savedQuestion = questionRepository.save(question);
         return savedQuestion;
     }
 
-
-    public void updateQuestion (Question question, MemberDetails memberDetails) {
+    public void updateQuestion (Question question, MemberDetails memberDetails, MultipartFile image, long questionId) {
         // 존재하는 질문인지 검증
-        Question findQuestion = validateQuestionExistence(question.getQuestionId().intValue());
+        Question findQuestion = validateQuestionExistence(questionId);
 
         // 수정할 질문글을 작성한 member email 추출
         String ownerEmail = findQuestion.getMember().getEmail();
@@ -94,6 +91,31 @@ public class QuestionService {
         // 질문의 상태가 비활성화 및 삭제 상태라면 변경 불가
         if(question.getQuestionStatus() != Question.QuestionStatus.QUESTION_REGISTERED) {
             throw new BusinessLogicException(ExceptionCode.UNCHANGABLE_STATE);
+        }
+
+        // 이미지 저장 로직
+        if(image != null && !image.isEmpty()) {
+            try{
+                // 저장할 디렉토리 경로 설정
+                String uploadDir = "uploads/";
+                Path upladPath = Paths.get(uploadDir);
+                // 디렉토리가 존재하지 않으면 생성
+                if (!Files.exists(upladPath)) {
+                    Files.createDirectories(upladPath);
+                }
+                // 파일명 생성 (현재 시간 + 원본 파일명)
+                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                // 파일 저장 경로 설정
+                Path filePath = upladPath.resolve(fileName);
+                // 파일을 지정된 경로로 복사 (파일 업로드)
+                Files.copy(image.getInputStream(), filePath);
+
+                // 저장된 이미지 경로를 question 객체에 설정
+                findQuestion.setImageUrl("/" + uploadDir + fileName);
+            } catch (IOException e) {
+                // 파일 저장 중 오류가 발생하면 예외 발생
+                throw new BusinessLogicException(ExceptionCode.FILE_UPLOAD_FAILED);
+            }
         }
         if (Objects.equals(ownerEmail, memberDetails.getEmail())){
             findQuestion.setContent(
@@ -115,7 +137,6 @@ public class QuestionService {
 
         questionRepository.save(findQuestion);
     }
-
 
     public Question findQuestion(int questionId, MemberDetails memberDetails) {
         // question 존재하는지 검증
@@ -181,8 +202,6 @@ public class QuestionService {
             questionRepository.save(findQuestion);
         }
     }
-
-
 
     // question 존재 확인
     public Question validateQuestionExistence(long questionId) {

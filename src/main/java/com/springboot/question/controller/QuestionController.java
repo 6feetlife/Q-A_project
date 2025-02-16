@@ -1,5 +1,6 @@
 package com.springboot.question.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springboot.auth.utils.MemberDetails;
 import com.springboot.question.dto.QuestionPatchDto;
@@ -61,20 +62,28 @@ public class QuestionController {
             );
         }
 
-
-        // 현재 인증된 사용자의 memberId를 DTO 객체에 설정
-        requestBody.setMemberId(memberDetails.getMemberId());
         questionService.createQuestion(questionMapper.questionPostDtoToQuestion(requestBody),memberDetails, image);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PatchMapping(value = "/{questionId}", consumes = "multipart/form-data")
-    public ResponseEntity patchQuestion(@Valid @RequestBody QuestionPatchDto requestBody,
-                                      @PathVariable("questionId") long questionId,
-                                        @AuthenticationPrincipal MemberDetails memberDetails) {
-        requestBody.setQuestionId(questionId);
+    public ResponseEntity patchQuestion(@RequestPart("data") String data,
+                                        @RequestPart(value = "image", required = false) MultipartFile image,
+                                        @PathVariable("questionId") long questionId,
+                                        @AuthenticationPrincipal MemberDetails memberDetails) throws JsonProcessingException {
+        // objectMapper 객체 생성 (JSON 문자열을 DTO 객체로 변환하는데 사용)
+        ObjectMapper objectMapper = new ObjectMapper();
+        // JSON 문자열(data)을 QuestionPostDto 객체로 변환
+        QuestionPatchDto requestBody = objectMapper.readValue(data, QuestionPatchDto.class);
+
+        // Spring Validator 를 사용하여 유효성 검사 실행
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+        // QuestionPatchDto 에 설정해둔 유효성 검사 설정을 가져와서 실행
+        Set<ConstraintViolation<QuestionPatchDto>> violations = validator.validate(requestBody);
+
         Question question = questionMapper.questionPatchDtoToQuestion(requestBody);
-        questionService.updateQuestion(question, memberDetails);
+        questionService.updateQuestion(question, memberDetails, image, questionId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
