@@ -39,7 +39,6 @@ public interface QuestionMapper {
         List<QuestionResponseDto> questionResponseDtos = questions.stream()
                         .map(question ->
                                 question.getQuestionVisibilityScope() == Question.QuestionVisibilityScope.PRIVATE_QUESTION ?
-                                questionToQuestionResponseDto(question) :
                                         new QuestionResponseDto(
                                                 question.getQuestionId(),
                                                 null,
@@ -49,8 +48,11 @@ public interface QuestionMapper {
                                                 null,
                                                 null,
                                                 question.getLikeCount(),
-                                                question.getViewCount()))
-                        .collect(Collectors.toList());
+                                                question.getViewCount())
+                                        : questionToQuestionResponseDto(question))
+                .collect(Collectors.toList());
+
+
 
         return questionResponseDtos;
     }
