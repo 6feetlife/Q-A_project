@@ -1,6 +1,7 @@
 package com.springboot.question.dto;
 
 import com.springboot.question.entity.Question;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import javax.validation.constraints.Size;
 @Getter
 @NoArgsConstructor
 @Setter
+@AllArgsConstructor
 public class QuestionPostDto {
 
 

@@ -25,6 +25,10 @@ server:
   servlet:
     encoding:
       force-response: true
+#    multipart:
+#      enabled: true
+#      max-file-size: 40MB
+#      max-request-size: 50MB
 mail:
   address:
     admin: admin@gmail.com
