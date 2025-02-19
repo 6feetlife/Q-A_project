@@ -11,6 +11,7 @@ import com.springboot.auth.utils.CustomAuthorityUtils;
 import com.springboot.auth.utils.MemberDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -25,6 +26,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,10 +37,12 @@ public class SecurityConfiguration {
     private final JwtTokenizer jwtTokenizer;
     private final CustomAuthorityUtils authorityUtils;
     private final MemberDetailService memberDetailService;
-    public SecurityConfiguration(JwtTokenizer jwtTokenizer, CustomAuthorityUtils authorityUtils, MemberDetailService memberDetailService) {
+    private final RedisTemplate<String, Object> redisTemplate;
+    public SecurityConfiguration(JwtTokenizer jwtTokenizer, CustomAuthorityUtils authorityUtils, MemberDetailService memberDetailService, RedisTemplate<String, Object> redisTemplate) {
         this.jwtTokenizer = jwtTokenizer;
         this.authorityUtils = authorityUtils;
         this.memberDetailService = memberDetailService;
+        this.redisTemplate = redisTemplate;
     }
 
     @Bean
@@ -91,6 +96,20 @@ public class SecurityConfiguration {
                         .antMatchers(HttpMethod.DELETE, "/*/questions/**").hasRole("USER")
                         .antMatchers(HttpMethod.DELETE, "/*/answers/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/v11/auth/logout")  // 로그아웃 URL 변경
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            // 로그아웃시 쿠키 삭제
+//                            Cookie cookie = new Cookie("refreshToken", null);
+//                            cookie.setPath("/");
+//                            cookie.setMaxAge(0);
+//                            response.addCookie(cookie);
+//
+//                            response.setStatus(HttpServletResponse.SC_OK);
+//                            response.getWriter().write("Logout successful");
+                        })
+                        .invalidateHttpSession(true) // 세션 무효화
                 );
         // http 객체를 SecurityFilterChain 으로 변환하여 반환
         return http.build();
@@ -118,6 +137,8 @@ public class SecurityConfiguration {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.addExposedHeader("Authorization");
+//        configuration.setExposedHeaders(List.of("Authorization", "RefreshToken"));
 
         // CORS 정책을 URL 패턴별로 설정하는 클래스, 특정 URL(endPoint) 에 대해 CORS 정책을 다르게 적용할때 사용
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -136,14 +157,14 @@ public class SecurityConfiguration {
                     builder.getSharedObject(AuthenticationManager.class);
 
             JwtAuthenticationFilter jwtAuthenticationFilter =
-                    new JwtAuthenticationFilter(authenticationManager,jwtTokenizer);
+                    new JwtAuthenticationFilter(authenticationManager,jwtTokenizer,redisTemplate);
             // 디폴트 request URL 인 "/login" 을 "/v11/auth/login" 으로 변경
             jwtAuthenticationFilter.setFilterProcessesUrl("/v11/auth/login");
             // 인증 성공 핸들러 추가
             jwtAuthenticationFilter.setAuthenticationSuccessHandler(new MemberAuthenticationSuccessHandler());
             // 인증 실패 핸들러 추가
             jwtAuthenticationFilter.setAuthenticationFailureHandler(new MemberAuthenticationFailureHandler());
-            JwtVerificationFilter jwtVerificationFilter = new JwtVerificationFilter(jwtTokenizer, authorityUtils,memberDetailService);
+            JwtVerificationFilter jwtVerificationFilter = new JwtVerificationFilter(jwtTokenizer, authorityUtils,memberDetailService, redisTemplate);
 
             // JwtAuthenticationFilter 를 Spring Security Filter Chain 에 추가
             builder.addFilter(jwtAuthenticationFilter)

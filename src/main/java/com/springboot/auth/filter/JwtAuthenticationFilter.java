@@ -5,6 +5,10 @@ import com.springboot.auth.dto.LoginDto;
 import com.springboot.auth.jwt.JwtTokenizer;
 import com.springboot.member.entity.Member;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,14 +22,20 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenizer jwtTokenizer;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenizer jwtTokenizer) {
+    @Value("${jwt.refresh-token-expiration-minutes}")
+    private long refreshTokenExpiration;
+
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenizer jwtTokenizer, RedisTemplate<String, Object> redisTemplate) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenizer = jwtTokenizer;
+        this.redisTemplate = redisTemplate;
     }
 
     // Checked Exception 을 자동으로 처리해주는 역할
@@ -60,11 +70,32 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String accessToken = delegateAccessToken(member);
         // refreshToken 생성
         String refreshToken = delegateRefreshToken(member);
+        //  Redis에 액세스 토큰 저장 (Key: "TOKEN:사용자이메일", Value: accessToken)
+        redisTemplate.opsForValue().set(member.getEmail(), accessToken,
+                jwtTokenizer.getAccessTokenExpirationMinutes(), TimeUnit.MINUTES);
+
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+                // javaScript 에서 접근 불가능
+                .httpOnly(true)
+                // HTTPS 에서만 전송
+                .secure(false)
+                .domain("localhost")
+                // 모든 도메인 접근 허용
+                .path("/")
+                .sameSite("Lax")
+                // refreshToken 수명
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+
         // 응답 헤더에 access 토큰을 Bearer 토큰 형식으로 추가
         response.setHeader("Authorization", "Bearer " + accessToken);
         // 응답 헤더에 refresh 토큰 추가
-        response.setHeader("Refresh", refreshToken);
-        this.getSuccessHandler().onAuthenticationSuccess(request, response, authResult);
+//        response.setHeader("Refresh", refreshToken);
+//        this.getSuccessHandler().onAuthenticationSuccess(request, response, authResult);
+
+        // 쿠키로 refreshToken 전달
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
     }
 
     // member 의 정보로 access 토큰 생성

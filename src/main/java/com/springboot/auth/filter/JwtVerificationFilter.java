@@ -6,6 +6,7 @@ import com.springboot.auth.utils.MemberDetailService;
 import com.springboot.auth.utils.MemberDetails;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,45 +18,58 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class JwtVerificationFilter extends OncePerRequestFilter {
     private final JwtTokenizer jwtTokenizer;
     private final CustomAuthorityUtils authorityUtils;
     private final MemberDetailService memberDetailService;
+    private final RedisTemplate<String, Object> redisTemplate;
     public JwtVerificationFilter(JwtTokenizer jwtTokenizer,
                                  CustomAuthorityUtils authorityUtils,
-                                 MemberDetailService memberDetailService) {
+                                 MemberDetailService memberDetailService, RedisTemplate<String, Object> redisTemplate) {
         this.jwtTokenizer = jwtTokenizer;
         this.authorityUtils = authorityUtils;
         this.memberDetailService = memberDetailService;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
-    //
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-        try {
-            // 파라미터로 받은 요청에서 JWT 를 검증하고 Map 구조의 claims 에 담는다
-            Map<String, Object> claims = verifyJws(request);
-            // 검증된 정보를 담은 claims 를 SecurityContext 에 셋팅
-            setAuthenticationToContext(claims);
-            // 서명이 유효하지 않을때 예외 캐치
-        } catch (SignatureException se) {
-            // 이때 Attribute 는 HttpServletRequest 객체에 데이터를 저장하는 키-값 이다.
-            // request 객체에 exception 이라는 이름을 가진 속성에 se 값을 저장하는것이다.
-            request.setAttribute("exception", se);
-            // 만료기한이 유효하지 않을때 예외 캐치
-        } catch (ExpiredJwtException ee) {
-            request.setAttribute("exception", ee);
-            // 이외에 예외가 터졌을때 예외 캐치
-        } catch (Exception e) {
-            request.setAttribute("exception", e);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+
+        String authorizationHeader = request.getHeader("Authorization");
+
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+
+            try {
+                // ✅ `JwtTokenizer`에서 subject(사용자 이메일) 가져오기
+                String username = jwtTokenizer.getUsernameFromToken(token);
+
+                // ✅ Redis에서 토큰 확인
+                String storedToken = (String) redisTemplate.opsForValue().get("TOKEN:" + username);
+
+                if (storedToken == null || !storedToken.equals(token)) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or Expired Token");
+                    return;
+                }
+
+                // ✅ 인증 정보 설정
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                return;
+            }
         }
-        // 다음 필터로 request 와 response 를 담아서 전달
-        filterChain.doFilter(request, response);
+
+        chain.doFilter(request, response);
     }
 
     @Override
@@ -96,4 +110,17 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
         // 시큐리티 context 에 있는 인증 정보를 현재 생성한 인증 정보로 교체
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
+
+    // redis 에서 토큰을 검증하는 메서드 추가
+    private void isTokenValidInRedis(Map<String, Object> claims) {
+        String username = Optional.ofNullable((String)claims.get("username"))
+                .orElseThrow(() -> new NullPointerException("Username is Null"));
+
+        Boolean hasKey = redisTemplate.hasKey(username);
+
+        if(Boolean.FALSE.equals(hasKey)) {
+            throw new IllegalStateException("Redis Key Does Not Exist for username: " + username);
+        }
+    }
+
 }
