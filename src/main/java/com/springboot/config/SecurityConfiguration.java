@@ -2,13 +2,11 @@ package com.springboot.config;
 
 import com.springboot.auth.filter.JwtAuthenticationFilter;
 import com.springboot.auth.filter.JwtVerificationFilter;
-import com.springboot.auth.handler.MemberAccessDeniedHandler;
-import com.springboot.auth.handler.MemberAuthenticationEntryPoint;
-import com.springboot.auth.handler.MemberAuthenticationFailureHandler;
-import com.springboot.auth.handler.MemberAuthenticationSuccessHandler;
+import com.springboot.auth.handler.*;
 import com.springboot.auth.jwt.JwtTokenizer;
 import com.springboot.auth.utils.CustomAuthorityUtils;
 import com.springboot.auth.utils.MemberDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,15 +20,16 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
-import java.util.List;
 
+
+@Slf4j
 @EnableMethodSecurity
 @Configuration
 public class SecurityConfiguration {
@@ -38,11 +37,17 @@ public class SecurityConfiguration {
     private final CustomAuthorityUtils authorityUtils;
     private final MemberDetailService memberDetailService;
     private final RedisTemplate<String, Object> redisTemplate;
-    public SecurityConfiguration(JwtTokenizer jwtTokenizer, CustomAuthorityUtils authorityUtils, MemberDetailService memberDetailService, RedisTemplate<String, Object> redisTemplate) {
+
+
+
+    public SecurityConfiguration(JwtTokenizer jwtTokenizer, CustomAuthorityUtils authorityUtils,
+                                 MemberDetailService memberDetailService, RedisTemplate<String, Object> redisTemplate) {
         this.jwtTokenizer = jwtTokenizer;
         this.authorityUtils = authorityUtils;
         this.memberDetailService = memberDetailService;
         this.redisTemplate = redisTemplate;
+
+
     }
 
     @Bean
@@ -77,6 +82,8 @@ public class SecurityConfiguration {
                 // 모든 요청에 대해 인증 없이 접근 가능
                 // 여러개의 요청에 대한 권한 정의가 가능하다
                 .authorizeHttpRequests(authorize -> authorize
+                        .antMatchers("/v11/auth/login").permitAll()
+                        .antMatchers("/v11/auth/logout").permitAll()
                         // 접근 권한과 상관없이 post 요청이라면 허용한다
                         .antMatchers(HttpMethod.POST, "/*/members").permitAll()
                         .antMatchers(HttpMethod.POST, "/*/questions").hasRole("USER")
@@ -97,20 +104,17 @@ public class SecurityConfiguration {
                         .antMatchers(HttpMethod.DELETE, "/*/answers/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/v11/auth/logout")  // 로그아웃 URL 변경
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            // 로그아웃시 쿠키 삭제
-//                            Cookie cookie = new Cookie("refreshToken", null);
-//                            cookie.setPath("/");
-//                            cookie.setMaxAge(0);
-//                            response.addCookie(cookie);
-//
-//                            response.setStatus(HttpServletResponse.SC_OK);
-//                            response.getWriter().write("Logout successful");
-                        })
-                        .invalidateHttpSession(true) // 세션 무효화
-                );
+                .exceptionHandling()
+                .authenticationEntryPoint(((request, response, authException) -> {
+                    log.warn("인증실패: {}", authException.getMessage());
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                }))
+                .and()
+                .logout().disable();
+
+
+
+
         // http 객체를 SecurityFilterChain 으로 변환하여 반환
         return http.build();
     }
@@ -149,27 +153,40 @@ public class SecurityConfiguration {
 
     // JwtAuthenticationFilter 등록
     public class CustomFilterConfigurer extends AbstractHttpConfigurer<CustomFilterConfigurer, HttpSecurity> {
-        // httpSecurity 객체를 받아 보안 설정 적용
+
+        @Override
         public void configure(HttpSecurity builder) throws Exception {
-            // AuthenticationManager 객체 생성
-            AuthenticationManager authenticationManager =
-                    // HttpSecurity 객체 내부의 AuthenticationManger 타입의 공유 객체를 불러온다
-                    builder.getSharedObject(AuthenticationManager.class);
-
-            JwtAuthenticationFilter jwtAuthenticationFilter =
-                    new JwtAuthenticationFilter(authenticationManager,jwtTokenizer,redisTemplate);
-            // 디폴트 request URL 인 "/login" 을 "/v11/auth/login" 으로 변경
+            AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
+            // 인증 과정에서 RedisTemplate을 사용하기 위해 RedisTemplate 생성자에 전달
+            JwtVerificationFilter jwtVerificationFilter = new JwtVerificationFilter(jwtTokenizer, authorityUtils, redisTemplate);
+            JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(authenticationManager, jwtTokenizer, redisTemplate);
             jwtAuthenticationFilter.setFilterProcessesUrl("/v11/auth/login");
-            // 인증 성공 핸들러 추가
-            jwtAuthenticationFilter.setAuthenticationSuccessHandler(new MemberAuthenticationSuccessHandler());
-            // 인증 실패 핸들러 추가
-            jwtAuthenticationFilter.setAuthenticationFailureHandler(new MemberAuthenticationFailureHandler());
-            JwtVerificationFilter jwtVerificationFilter = new JwtVerificationFilter(jwtTokenizer, authorityUtils,memberDetailService, redisTemplate);
-
-            // JwtAuthenticationFilter 를 Spring Security Filter Chain 에 추가
-            builder.addFilter(jwtAuthenticationFilter)
-                    // 로그인 인증에 성공한후 발급받은 JWT 가 클라이언트의 request 헤더에 포함되어 있을 경우에만 동작
-                    .addFilterAfter(jwtVerificationFilter, JwtAuthenticationFilter.class);
+            builder.addFilter(jwtAuthenticationFilter);
+            builder.addFilterAfter(jwtVerificationFilter, UsernamePasswordAuthenticationFilter.class); // (1)
         }
+//        // httpSecurity 객체를 받아 보안 설정 적용
+//        public void configure(HttpSecurity builder) throws Exception {
+//            // AuthenticationManager 객체 생성
+//            AuthenticationManager authenticationManager =
+//                    // HttpSecurity 객체 내부의 AuthenticationManger 타입의 공유 객체를 불러온다
+//                    builder.getSharedObject(AuthenticationManager.class);
+//
+//            JwtAuthenticationFilter jwtAuthenticationFilter =
+//                    new JwtAuthenticationFilter(authenticationManager,jwtTokenizer,redisTemplate);
+//            // 디폴트 request URL 인 "/login" 을 "/v11/auth/login" 으로 변경
+//            jwtAuthenticationFilter.setFilterProcessesUrl("/v11/auth/login");
+//            // 인증 성공 핸들러 추가
+//            jwtAuthenticationFilter.setAuthenticationSuccessHandler(new MemberAuthenticationSuccessHandler());
+//            // 인증 실패 핸들러 추가
+//            jwtAuthenticationFilter.setAuthenticationFailureHandler(new MemberAuthenticationFailureHandler());
+//            JwtVerificationFilter jwtVerificationFilter = new JwtVerificationFilter(jwtTokenizer, authorityUtils,memberDetailService, redisTemplate);
+//
+//            // JwtAuthenticationFilter 를 Spring Security Filter Chain 에 추가
+//            builder.addFilter(jwtAuthenticationFilter)
+//                    // 로그인 인증에 성공한후 발급받은 JWT 가 클라이언트의 request 헤더에 포함되어 있을 경우에만 동작
+//                    .addFilterAfter(jwtVerificationFilter, JwtAuthenticationFilter.class);
+//        }
+//    }
     }
+
 }

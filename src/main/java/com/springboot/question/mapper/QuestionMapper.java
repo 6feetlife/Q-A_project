@@ -52,8 +52,6 @@ public interface QuestionMapper {
                                         : questionToQuestionResponseDto(question))
                 .collect(Collectors.toList());
 
-
-
         return questionResponseDtos;
     }
 

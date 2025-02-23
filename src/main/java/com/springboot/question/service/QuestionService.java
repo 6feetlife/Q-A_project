@@ -33,7 +33,6 @@ public class QuestionService {
     private final MemberService memberService;
     private final LikesRepository likesRepository;
 
-
     @Value("${mail.address.admin}")
     private String adminEmail;
 

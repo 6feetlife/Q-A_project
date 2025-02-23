@@ -69,7 +69,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         // accessToken 생성
         String accessToken = delegateAccessToken(member);
         // refreshToken 생성
-        String refreshToken = delegateRefreshToken(member);
+        String refreshToken = delegateRefreshToken(member, accessToken);
         //  Redis에 액세스 토큰 저장 (Key: "TOKEN:사용자이메일", Value: accessToken)
         redisTemplate.opsForValue().set(member.getEmail(), accessToken,
                 jwtTokenizer.getAccessTokenExpirationMinutes(), TimeUnit.MINUTES);
@@ -114,11 +114,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         // accessToken 생성
         String accessToken = jwtTokenizer.generateAccessToken(claims, subject, expiration, base64EncodedSecretKey);
 
+        System.out.println("🔍 원본 Secret Key: " + jwtTokenizer.getSecretKey());
+        System.out.println("🔍 Base64 Secret Key: " + jwtTokenizer.encodeBase64SecretKey(jwtTokenizer.getSecretKey()));
+
         return accessToken;
     }
 
     // member 의 정보로 refresh 토큰 생성
-    private String delegateRefreshToken(Member member) {
+    private String delegateRefreshToken(Member member, String accessToken) {
         // subject 에 member email 할당
         String subject = member.getEmail();
         // 토큰의 만료기한 설정
@@ -126,7 +129,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         // 인코딩된 시크릿키 생성
         String base64EncodedSecretKey = jwtTokenizer.encodeBase64SecretKey(jwtTokenizer.getSecretKey());
         // refresh 토큰 생성
-        String refreshToken = jwtTokenizer.generateRefreshToken(subject, expiration, base64EncodedSecretKey);
+        String refreshToken = jwtTokenizer.generateRefreshToken(subject, expiration, base64EncodedSecretKey, accessToken);
 
         return refreshToken;
     }

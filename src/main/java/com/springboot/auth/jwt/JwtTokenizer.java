@@ -9,21 +9,30 @@ import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtTokenizer {
-
+    private final RedisTemplate<String, Object> redisTemplate;
     @Getter
     // yml 에서 key 값 가져옴
     @Value("${jwt.key}")
     private String secretKey;
+
+    public JwtTokenizer(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Getter
     // yml 에서 access 토큰의 만료 기간 가져옴
@@ -49,7 +58,7 @@ public class JwtTokenizer {
         // 인코딩된 비밀번호로 서명키 생성
         Key key = getKeyFromBase64EncodedKey(base64EncodedSecretKey);
 
-        return Jwts.builder()
+         String accessToken = Jwts.builder()
                 // 민감한 정보
                 .setClaims(claims)
                 // payload 정보
@@ -62,21 +71,29 @@ public class JwtTokenizer {
                 .signWith(key)
                 // 압축
                 .compact();
+
+        // Redis 의 ListOperations 객체를 사용하여 리스트 형태로 데이터르 처리
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+        // claims 에 저장된 username(이메일)을 키로 accessToken 값을 추가
+        valueOperations.set((String) claims.get("username"), accessToken, accessTokenExpirationMinutes, TimeUnit.MINUTES);
+        return accessToken;
     }
 
     // RefreshToken 생성
     public String generateRefreshToken(String subject,
                                        Date expiration,
-                                       String base64EncodedSecretKey) {
+                                       String base64EncodedSecretKey,
+                                       String accessToken) {
         Key key = getKeyFromBase64EncodedKey(base64EncodedSecretKey);
         // accessToken 재발급에 사용되는 토큰으로 claims 는 담지 않는다.
-        return Jwts.builder()
+        String refreshToken = Jwts.builder()
                 .setSubject(subject)
                 .setIssuedAt(Calendar.getInstance().getTime())
                 .setExpiration(expiration)
                 .signWith(key)
                 .compact();
 
+        return refreshToken;
     }
 
     // 서명 검증을 통과한 JWT 내부정보(Claims)를 검증 후 반환하는 역할
@@ -106,7 +123,7 @@ public class JwtTokenizer {
                 .parseClaimsJws(jws);
     }
 
-    // 토큰 만료기한 지정
+    // 토큰 만료기한 추출
     public Date getTokenExpiration(int expirationMinutes) {
         // 현재 시스템의 시간과 날짜 정보를 담은 객체 생성
         Calendar calendar = Calendar.getInstance();
@@ -129,16 +146,19 @@ public class JwtTokenizer {
         return key;
     }
 
-    // ✅ 토큰에서 subject(사용자 이메일) 추출하는 메서드 추가
-    public String getUsernameFromToken(String token) {
-        return getClaimsFromToken(token).getSubject();
-    }
 
-    // ✅ 토큰에서 Claims(정보) 추출하는 메서드 추가
-    private Claims getClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(token)
-                .getBody();
+    // 로그아웃시 레디스에서 email 을 기준으로 토큰 값 삭제
+    public boolean deleteRegisterToken(String username) {
+        return Optional.ofNullable(redisTemplate.hasKey(username))
+                // key 가 존재할때만 진행
+                .filter(Boolean::booleanValue)
+                .map(hasKey -> {
+                    String accessToken = (String) redisTemplate.opsForValue().get(username);
+                    redisTemplate.delete(accessToken);
+                    redisTemplate.delete(username);
+                    return true;
+                })
+                // key 가 존재하지 않거나 삭제되지 않았을 때 false 반환
+                .orElse(false);
     }
 }
