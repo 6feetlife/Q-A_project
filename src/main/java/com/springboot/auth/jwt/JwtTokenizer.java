@@ -72,6 +72,7 @@ public class JwtTokenizer {
                 // 압축
                 .compact();
 
+         redisTemplate.delete(subject);
         // Redis 의 ListOperations 객체를 사용하여 리스트 형태로 데이터르 처리
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         // claims 에 저장된 username(이메일)을 키로 accessToken 값을 추가
@@ -161,4 +162,21 @@ public class JwtTokenizer {
                 // key 가 존재하지 않거나 삭제되지 않았을 때 false 반환
                 .orElse(false);
     }
+    public String getUsernameFromToken(String token) {
+        return getClaimsFromToken(token).getSubject(); // 🔹 "sub" 클레임 값(= 사용자 이메일) 반환
+    }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey()) // 🔹 서명 검증을 위한 Key 설정
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
 }

@@ -4,17 +4,24 @@ import com.springboot.auth.jwt.JwtTokenizer;
 import com.springboot.auth.utils.CustomAuthorityUtils;
 import com.springboot.auth.utils.MemberDetailService;
 import com.springboot.auth.utils.MemberDetails;
+import com.springboot.member.entity.Member;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,29 +29,29 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 public class JwtVerificationFilter extends OncePerRequestFilter {
     private final JwtTokenizer jwtTokenizer;
     private final CustomAuthorityUtils authorityUtils;
-
     private final RedisTemplate<String, Object> redisTemplate;
-
+    private final MemberDetailService memberDetailService;
     public JwtVerificationFilter(JwtTokenizer jwtTokenizer,
                                  CustomAuthorityUtils authorityUtils,
 
-                                 RedisTemplate<String, Object> redisTemplate) {
+                                 RedisTemplate<String, Object> redisTemplate, MemberDetailService memberDetailService) {
         this.jwtTokenizer = jwtTokenizer;
         this.authorityUtils = authorityUtils;
 
         this.redisTemplate = redisTemplate;
+        this.memberDetailService = memberDetailService;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        log.info("🛑 JWT 필터 실행됨! 요청 URL: {}", request.getRequestURI());
         String authorizationHeader = request.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -55,26 +62,7 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
                 // Redis 에서 토큰 검증
                 isTokenValidInRedis(claims);
                 setAuthenticationToContext(claims);
-//                // 블랙리스트 확인
-//                if (redisTemplate.hasKey(token)) {
-//                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "This token is blacklisted");
-//                }
-//                // ✅ `JwtTokenizer`에서 subject(사용자 이메일) 가져오기
-//                String username = jwtTokenizer.getUsernameFromToken(token);
-//
-//                // ✅ Redis에서 토큰 확인
-//                String storedToken = (String) redisTemplate.opsForValue().get("TOKEN:" + username);
-//
-//                // redis 에 저장된 토큰과 현재 요청의 토큰 비교
-//                if (storedToken == null || !storedToken.equals(token)) {
-//                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or Expired Token");
-//                    return;
-//                }
-//
-//                // ✅ 인증 정보 설정
-//                UsernamePasswordAuthenticationToken authentication =
-//                        new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
+
 
             } catch (Exception e) {
                 log.warn("🚨 JWT 인증 실패: {}", e.getMessage());
@@ -85,6 +73,8 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
 
         chain.doFilter(request, response);
     }
+
+
 
     @Override
     // JWT 가 인증 헤더에 포함되지 않았다면 자격증명이 필요하지 않은 리소스에 대한 요청이라고 판단후
@@ -114,12 +104,12 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
     private void setAuthenticationToContext(Map<String, Object> claims) {
         // payload 에서 username 가져오는데 String 으로 형변환 해줘야함
         String username = (String)claims.get("username");
-
+        UserDetails userDetails = memberDetailService.loadUserByUsername(username);
 
         // payload 에서 권한 목록 가져와서 권한 생성후 리스트화
         List<GrantedAuthority> authorities = authorityUtils.createAuthorities((List)claims.get("roles"));
         // username 과 password 가 들어간 토큰 생성
-        Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
         // 시큐리티 context 에 있는 인증 정보를 현재 생성한 인증 정보로 교체
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
@@ -135,6 +125,9 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
             throw new IllegalStateException("Redis Key Does Not Exist for username: " + username);
         }
     }
+
+
+
 
 
 }
